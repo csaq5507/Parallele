@@ -35,6 +35,7 @@ int main(int argc, char** argv) {
     Matrix B = createMatrix(N,N);
     
     // fill matrixes
+    #pragma openmp parallel for
     for(int i = 0; i<N; i++) {
         for(int j = 0; j<N; j++) {
             A[i*N+j] = i*j;             // some matrix - note: flattend indexing!
