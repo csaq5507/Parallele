@@ -199,12 +199,12 @@ kernel_code loadCode(const char* filename) {
         fprintf(stderr, "Failed to load kernel from file %s\n", filename);
         exit(1);
     }
-    
+
     kernel_code res;
     res.code = (char*)malloc(MAX_SOURCE_SIZE);
     res.size = fread( (char*)res.code, 1, MAX_SOURCE_SIZE, fp);
     fclose( fp );
-    
+
     return res;
 }
 
