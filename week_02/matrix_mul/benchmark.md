@@ -11,7 +11,7 @@ Verification: OK
 
 ivan@acerlaptopivan:~/CLionProjects/Parallele/cmake-build-release/week_02/matrix_mul$ ./benchmark.sh omp 512 3000
 Computing matrix-matrix product with N=512
-Total time: 59.969ms
+Total time: 170.969ms
 Verification: OK
 Computing matrix-matrix product with N=1024
 Total time: 2026.479ms
@@ -48,6 +48,6 @@ ivan@acerlaptopivan:
 | Dimension | 512 | 1024 | 2048 |
 |---|---|---|---|
 | Seq | 201 ms | 2386 ms | 79473 ms |
-| OMP | 59 ms | 2026 ms | 22345 ms |
+| OMP | 170 ms | 2026 ms | 22345 ms |
 | OCL | 193 ms | 441 ms | 2902 ms |
 | OC2 | 169 ms | 248 ms | 924 ms |
