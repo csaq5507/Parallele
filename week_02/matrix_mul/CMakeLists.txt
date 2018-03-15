@@ -24,11 +24,19 @@ include_directories(${OpenCL_INCLUDE_DIRS})
 link_directories(${OpenCL_LIBRARY})
 
 add_executable(week2_ocl mat_mul_ocl.c)
+add_executable(week2_ocl_v2 mat_mul_ocl_v2.c)
 add_executable(week2_omp mat_mul_omp.c)
 add_executable(week2_seq mat_mul_seq.c)
 
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic -O3 -std=c11 -DSEQ_OPT")
+add_executable(week2_seq_opt mat_mul_seq.c)
+
+
 target_include_directories (week2_ocl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries (week2_ocl ${OpenCL_LIBRARY})
+
+target_include_directories (week2_ocl_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries (week2_ocl_v2 ${OpenCL_LIBRARY})
 
 target_include_directories (week2_omp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
