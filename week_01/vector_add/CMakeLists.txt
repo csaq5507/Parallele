@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(Parallele)
 
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
 FIND_PACKAGE(OpenMP)
 
 IF(OPENMP_FOUND)
@@ -30,7 +32,5 @@ target_include_directories (week1_ocl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries (week1_ocl ${OpenCL_LIBRARY})
 
 target_include_directories (week1_omp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries (week1_omp ${OpenCL_LIBRARY})
 
 target_include_directories (week1_seq PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries (week1_seq ${OpenCL_LIBRARY})
