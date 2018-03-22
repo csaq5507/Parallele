@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "utils.h"
-#include "cl_utils.h";
+#include "cl_utils.h"
 
 typedef float value_t;
 
@@ -85,8 +85,6 @@ int main(int argc, char** argv) {
         	  // Part 3: fill memory buffers
         	        err = clEnqueueWriteBuffer(command_queue, devMatA, CL_FALSE, 0, N * N * sizeof(value_t), A, 0, NULL, NULL);
         	        CLU_ERRCHECK(err, "Failed to write matrix A to device");
-        	        err = clEnqueueWriteBuffer(command_queue, devMatB, CL_TRUE, 0,  N * N * sizeof(value_t), B, 0, NULL, NULL);
-        	        CLU_ERRCHECK(err, "Failed to write matrix B to device");
 
 
         	        // Part 5: set arguments and execute kernel

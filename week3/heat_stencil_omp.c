@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <omp.h>
 
 #include "utils.h"
 
@@ -26,10 +27,9 @@ int main(int argc, char** argv) {
     if (argc > 1) {
         N = atoi(argv[1]);
     }
-    int T = N*100;
+    int T = 10000;
     printf("Computing heat-distribution for room size N=%d for T=%d timesteps\n", N, T);
 
-    
     // ---------- setup ----------
 
     // create a buffer for storing temperature fields
@@ -58,23 +58,22 @@ int main(int argc, char** argv) {
     timestamp begin = now();
 
     // -- BEGIN ASSIGNMENT --
-    
-    // TODO: parallelize the following computation using OpenMP
-    
+
 
     // for each time step ..
     for(int t=0; t<T; t++) {
 
         // .. we propagate the temperature 
 
-    	#pragma openmp parallel for
+    	#pragma omp parallel for num_threads(8)
+
 
         for(long long i = 0; i<N; i++) {
             for(long long j = 0; j<N; j++) {
 
                 // center stays constant (the heat is still on)
                 if (i == source_x && j == source_y) {
-                    B[i*N+j] = A[i*N+j];
+                    B[i*N+j] = A[  i*N+j];
                     continue;
                 }
 

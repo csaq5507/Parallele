@@ -12,13 +12,13 @@ __kernel void heat_stencil(
 
 
  // center stays constant (the heat is still on)
-            if (i == source_x && j == source_y) {
-                B[i*N+j] = A[i*N+j];
-                continue;
+            if (i == N/4 && j == N/4) {
+                 B[i*N+j] = A[i*N+j];
+                return;
             }
 
             // get current temperature at (i,j)
-            value_t tc = A[i*N+j];
+            float tc = A[i*N+j];
 
             // get temperatures left/right and up/down
             float tl = ( j !=  0  ) ? A[i*N+(j-1)] : tc;
