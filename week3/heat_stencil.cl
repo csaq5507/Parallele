@@ -1,7 +1,6 @@
 __kernel void heat_stencil(
-    __global float* c,
-    __global const float* a,
-    __global const float* b,
+    __global const float* A,
+    __global float* B,
     int N
 ) {
     // obtain position of this 'thread'
