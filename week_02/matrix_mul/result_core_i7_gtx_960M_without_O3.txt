@@ -1,0 +1,20 @@
+Sequential:
+Computing matrix-matrix product with N=1000
+Total time: 3734.098ms
+Total MFLOP: 2002
+MFLOP/s: 536.140193
+Verification: OK
+
+OpenMP:
+Computing matrix-matrix product with N=1000
+Total time: 1686.179ms
+Total MFLOP: 2002
+MFLOP/s: 1187.299525
+Verification: OK
+
+OpenCL:
+Computing matrix-matrix product with N=1000
+Total time: 342.293ms
+Total MFLOP: 2002
+MFLOP/s: 5848.794027
+Verification: OK
