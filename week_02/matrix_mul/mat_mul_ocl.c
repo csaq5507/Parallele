@@ -123,11 +123,38 @@ int main(int argc, char** argv) {
     cl_ulong time_start;
     cl_ulong time_end;
 
+    //kernel
     clGetEventProfilingInfo(kernel_execution_event, CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
     clGetEventProfilingInfo(kernel_execution_event, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
 
     double kernel_nano_seconds = time_end-time_start;
+
+
+    //stream a to device
+    clGetEventProfilingInfo(stream_a_to_device, CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
+    clGetEventProfilingInfo(stream_a_to_device, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
+
+    double stream_a_to_device_nano_seconds = time_end-time_start;
+
+    //stream b to device
+    clGetEventProfilingInfo(stream_b_to_device, CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
+    clGetEventProfilingInfo(stream_b_to_device, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
+
+    double stream_b_to_device_nano_seconds = time_end-time_start;
+
+    //stream c from device
+    clGetEventProfilingInfo(stream_c_from_device, CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
+    clGetEventProfilingInfo(stream_c_from_device, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
+
+    double stream_c_from_device_nano_seconds = time_end-time_start;
+
+    //print results
+
     printf("Kernel execution time is: %0.3f milliseconds \n",kernel_nano_seconds / 1000000.0);
+    printf("Stream a to device execution time is: %0.3f milliseconds \n",stream_a_to_device_nano_seconds / 1000000.0);
+    printf("Stream b to device time is: %0.3f milliseconds \n",stream_b_to_device_nano_seconds / 1000000.0);
+    printf("Stream c from device time is: %0.3f milliseconds \n",stream_c_from_device_nano_seconds / 1000000.0);
+    printf("\n");
 
     timestamp end = now();
     printf("Total time: %.3fms\n", (end-begin)*1000);
