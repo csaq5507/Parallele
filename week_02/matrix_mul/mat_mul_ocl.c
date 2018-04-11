@@ -46,6 +46,12 @@ int main(int argc, char** argv) {
     
     Matrix C = createMatrix(N,N);
 
+    //---------- define events ----------
+    cl_event kernel_execution_event;
+    cl_event stream_a_to_device;
+    cl_event stream_b_to_device;
+    cl_event stream_c_from_device;
+
     timestamp begin = now();
     
     {
@@ -66,9 +72,9 @@ int main(int argc, char** argv) {
         CLU_ERRCHECK(err, "Failed to create buffer for matrix C");
 
         // Part 3: fill memory buffers
-        err = clEnqueueWriteBuffer(command_queue, devMatA, CL_FALSE, 0, N * N * sizeof(value_t), A, 0, NULL, NULL);
+        err = clEnqueueWriteBuffer(command_queue, devMatA, CL_FALSE, 0, N * N * sizeof(value_t), A, 0, NULL, &stream_a_to_device);
         CLU_ERRCHECK(err, "Failed to write matrix A to device");
-        err = clEnqueueWriteBuffer(command_queue, devMatB, CL_TRUE, 0,  N * N * sizeof(value_t), B, 0, NULL, NULL);
+        err = clEnqueueWriteBuffer(command_queue, devMatB, CL_TRUE, 0,  N * N * sizeof(value_t), B, 0, NULL, &stream_b_to_device);
         CLU_ERRCHECK(err, "Failed to write matrix B to device");
 
         // Part 4: create kernel from source
@@ -84,13 +90,19 @@ int main(int argc, char** argv) {
             sizeof(cl_mem), (void *)&devMatB,
             sizeof(int), &N
         );
-        CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, size, NULL, 0, NULL, NULL), "Failed to enqueue 2D kernel");
+        CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, size, NULL, 0, NULL, &kernel_execution_event), "Failed to enqueue 2D kernel");
 
         // Part 6: copy results back to host
-        err = clEnqueueReadBuffer(command_queue, devMatC, CL_TRUE, 0, N * N * sizeof(value_t), C, 0, NULL, NULL);
+        err = clEnqueueReadBuffer(command_queue, devMatC, CL_TRUE, 0, N * N * sizeof(value_t), C, 0, NULL, &stream_c_from_device);
         CLU_ERRCHECK(err, "Failed reading back result");
 
         // Part 7: cleanup
+        //-----------wait for events------
+        clWaitForEvents(1, &kernel_execution_event);
+        clWaitForEvents(1, &stream_a_to_device);
+        clWaitForEvents(1, &stream_b_to_device);
+        clWaitForEvents(1, &stream_c_from_device);
+
         // wait for completed operations (there should be none)
         CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
         CLU_ERRCHECK(clFinish(command_queue),   "Failed to wait for command queue completion");
@@ -106,7 +118,17 @@ int main(int argc, char** argv) {
         CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
         CLU_ERRCHECK(clReleaseContext(context),            "Failed to release OpenCL context");
     }
-    
+
+    //evaluate events
+    cl_ulong time_start;
+    cl_ulong time_end;
+
+    clGetEventProfilingInfo(kernel_execution_event, CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
+    clGetEventProfilingInfo(kernel_execution_event, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
+
+    double kernel_nano_seconds = time_end-time_start;
+    printf("Kernel execution time is: %0.3f milliseconds \n",kernel_nano_seconds / 1000000.0);
+
     timestamp end = now();
     printf("Total time: %.3fms\n", (end-begin)*1000);
     const int mflop =( (N*N*(N/4)*8) + (N*N*2) )/1e6;
@@ -124,6 +146,14 @@ int main(int argc, char** argv) {
     }
     
     printf("Verification: %s\n", (success)?"OK":"FAILED");
+
+    //-----------evaluate events------
+    clWaitForEvents(1, &kernel_execution_event);
+    clWaitForEvents(1, &stream_a_to_device);
+    clWaitForEvents(1, &stream_b_to_device);
+    clWaitForEvents(1, &stream_c_from_device);
+
+
     
     // ---------- cleanup ----------
     
