@@ -80,7 +80,7 @@ const char* cluDeviceTypeString(cl_device_type type);
 		
 		// create command queue if requested
 		if(out_queue != NULL) {
-			*out_queue = clCreateCommandQueue(*out_context, device_id, 0, &err);
+			*out_queue = clCreateCommandQueue(*out_context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
 			CLU_ERRCHECK(err, "Failed to create ocl command queue");
 		}
 	}
