@@ -57,7 +57,9 @@ int main(int argc, char** argv) {
     }
     timestamp end = now();
     printf("Total time: %.3fms\n", (end-begin)*1000);
-
+    const int mflop =( (N*N*(N/4)*8) + (N*N*2) )/1e6;
+    printf("Total MFLOP: %d\n",mflop);
+    printf("MFLOP/s: %f\n", mflop / (end-begin));
     // ---------- check ----------    
     
     bool success = true;

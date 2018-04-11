@@ -66,7 +66,8 @@ int main(int argc, char** argv) {
     
     timestamp end = now();
     printf("Total time: %.3fms\n", (end-begin)*1000);
-
+    printf("Total MFLOP: %d\n",N*N*N*2);
+    printf("MFLPO/s: %f\n", (N*N*N*2) / (end-begin));
     // ---------- check ----------    
     
     bool success = true;
