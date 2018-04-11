@@ -35,7 +35,8 @@ int main(int argc, char** argv) {
 
     // create a buffer for storing temperature fields
     Matrix A = createMatrix(N,N);
-    
+    Matrix C = createMatrix(N,N);
+
     // set up initial conditions in A
     for(int i = 0; i<N; i++) {
         for(int j = 0; j<N; j++) {
@@ -72,6 +73,8 @@ int main(int argc, char** argv) {
         CLU_ERRCHECK(err, "Failed to create buffer for matrix A");
         cl_mem devMatB = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, N * N * sizeof(value_t), NULL, &err);
         CLU_ERRCHECK(err, "Failed to create buffer for matrix B");
+        cl_mem devMatC = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, N * N * sizeof(value_t), NULL, &err);
+        CLU_ERRCHECK(err, "Failed to create buffer for matrix C");
 
 
         // Part 4: create kernel from source
@@ -80,18 +83,20 @@ int main(int argc, char** argv) {
         CLU_ERRCHECK(err, "Failed to create heat_stencil kernel from program");
 
 
-        for(int t=0; t<T; t++) {
+        for(int t=0; t<T; t+=1000) {
 
         	  // Part 3: fill memory buffers
         	        err = clEnqueueWriteBuffer(command_queue, devMatA, CL_FALSE, 0, N * N * sizeof(value_t), A, 0, NULL, NULL);
         	        CLU_ERRCHECK(err, "Failed to write matrix A to device");
-
+                    err = clEnqueueWriteBuffer(command_queue, devMatC, CL_FALSE, 0, N * N * sizeof(value_t), A, 0, NULL, NULL);
+                    CLU_ERRCHECK(err, "Failed to write matrix C to device");
 
         	        // Part 5: set arguments and execute kernel
         	        size_t size[2] = {N, N}; // two dimensional range
         	        cluSetKernelArguments(kernel, 3,
         	            sizeof(cl_mem), (void *)&devMatA,
         	            sizeof(cl_mem), (void *)&devMatB,
+        	            sizeof(cl_mem), (void *)&devMatC,
         	            sizeof(int), &N
         	        );
         	        CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, size, NULL, 0, NULL, NULL), "Failed to enqueue 2D kernel");
@@ -107,10 +112,8 @@ int main(int argc, char** argv) {
                B = H;
 
                // show intermediate step
-               if (!(t%1000)) {
                    printf("Step t=%d:\n", t);
                    printTemperature(A,N,N);
-               }
            }
 
         // Part 7: cleanup

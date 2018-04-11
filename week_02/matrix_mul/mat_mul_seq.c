@@ -5,67 +5,14 @@
 
 typedef float value_t;
 
-//#define SEQ_OPT
+
 // -- matrix utilities --
 
-#ifdef SEQ_OPT
+typedef value_t* Matrix;
 
-struct M {
-    value_t *data;
-    int * indirection;
-    int N;
-};
+Matrix createMatrix(int N, int M);
 
-struct M * init(int N)
-{
-    struct M* ret = malloc(sizeof(struct M));
-    ret->N=N;
-    ret->data = malloc(sizeof(value_t)*N*N);
-    ret->indirection = malloc(sizeof(int)*N);
-    for(int i=0;i<N;i++)
-    {
-        ret->indirection[i] = i * N;
-    }
-    return ret;
-}
-
-value_t get(struct M* object,int i,int j){
-    return object->data[object->indirection[i] + j];
-}
-
-void set(struct M* object,int i,int j, value_t value){
-    object->data[object->indirection[i] + j] = value;
-}
-
-#else
-
-struct M{
-    value_t *data;
-    int N;
-
-};
-
-struct M * init(int N)
-{
-    struct M* ret = malloc(sizeof(struct M));
-    ret->N=N;
-    ret->data = malloc(sizeof(value_t)*N*N);
-    return ret;
-}
-
-value_t get(struct M* object,int i,int j){
-    return object->data[i * object->N + j];
-}
-
-void set(struct M* object,int i,int j, value_t value){
-    object->data[i * object->N + j] = value;
-}
-
-
-#endif
-
-typedef struct M Matrix;
-
+void releaseMatrix(Matrix m);
 
 // ----------------------
 
@@ -83,29 +30,29 @@ int main(int argc, char** argv) {
     // ---------- setup ----------
 
     // create two input matrixes (on heap!)
-    Matrix* A = init(N);
-    Matrix* B = init(N);
+    Matrix A = createMatrix(N,N);
+    Matrix B = createMatrix(N,N);
     
     // fill matrixes
     for(int i = 0; i<N; i++) {
         for(int j = 0; j<N; j++) {
-            set(A,i,j,i*j);             // some matrix - note: flattend indexing!
-            set(B,i,j,(i==j) ? 1 : 0);  // identity
+            A[i*N+j] = i*j;             // some matrix - note: flattend indexing!
+            B[i*N+j] = (i==j) ? 1 : 0;  // identity
         }
     }
     
     // ---------- compute ----------
     
-    Matrix* C=init(N);
+    Matrix C = createMatrix(N,N);
 
     timestamp begin = now();
     for(long long i = 0; i<N; i++) {
         for(long long j = 0; j<N; j++) {
             value_t sum = 0;
             for(long long k = 0; k<N; k++) {
-                sum += get(A,i,k) * get(B,k,j);
+                sum += A[i*N+k] * B[k*N+j];
             }
-            set(C,i,j,sum);
+            C[i*N+j] = sum;
         }
     }
     timestamp end = now();
@@ -116,7 +63,7 @@ int main(int argc, char** argv) {
     bool success = true;
     for(long long i = 0; i<N; i++) {
         for(long long j = 0; j<N; j++) {
-            if (get(C,i,j) == i*j) continue;
+            if (C[i*N+j] == i*j) continue;
             success = false;
             break;
         }
@@ -125,9 +72,22 @@ int main(int argc, char** argv) {
     printf("Verification: %s\n", (success)?"OK":"FAILED");
     
     // ---------- cleanup ----------
-
+    
+    releaseMatrix(A);
+    releaseMatrix(B);
+    releaseMatrix(C);
     
     // done
     return (success) ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+
+
+Matrix createMatrix(int N, int M) {
+    // create data and index vector
+    return malloc(sizeof(value_t)*N*M);
+}
+
+void releaseMatrix(Matrix m) {
+    free(m);
 }
 

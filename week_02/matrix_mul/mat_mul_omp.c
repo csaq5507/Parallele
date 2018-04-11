@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <omp.h>
 
 #include "utils.h"
 
@@ -35,7 +34,6 @@ int main(int argc, char** argv) {
     Matrix B = createMatrix(N,N);
     
     // fill matrixes
-    #pragma openmp parallel for
     for(int i = 0; i<N; i++) {
         for(int j = 0; j<N; j++) {
             A[i*N+j] = i*j;             // some matrix - note: flattend indexing!
@@ -48,10 +46,12 @@ int main(int argc, char** argv) {
     Matrix C = createMatrix(N,N);
 
     timestamp begin = now();
-    
-    
-    // -- BEGIN ASSIGNMENT --
 
+    // The i and j loop do not carry any dependencies, the k loop does.
+    // Thus, i and j can be parallelized.
+    // For thread-level parallelism (OpenMP) outer-most parallelism is more
+    // beneficial to avoid synchronization overhead.
+    
     #pragma omp parallel for
     for(long long i = 0; i<N; i++) {
         for(long long j = 0; j<N; j++) {
@@ -62,8 +62,6 @@ int main(int argc, char** argv) {
             C[i*N+j] = sum;
         }
     }
-    
-    // -- END ASSIGNMENT --
     
     
     timestamp end = now();
