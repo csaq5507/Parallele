@@ -20,11 +20,11 @@ void releaseMatrix(Matrix m);
 int main(int argc, char** argv) {
 
     // 'parsing' optional input parameter = problem size
-    int N = 1000;
+    long int N;
     if (argc > 1) {
         N = atoi(argv[1]);
-    }
-    printf("Computing matrix-matrix product with N=%d\n", N);
+    } else return 0;
+  //  printf("Computing matrix-matrix product with N=%ld\n", N);
 
     
     // ---------- setup ----------
@@ -56,10 +56,12 @@ int main(int argc, char** argv) {
         }
     }
     timestamp end = now();
-    printf("Total time: %.3fms\n", (end-begin)*1000);
-    const int mflop =( (N*N*(N/4)*8) + (N*N*2) )/1e6;
-    printf("Total MFLOP: %d\n",mflop);
-    printf("MFLOP/s: %f\n", mflop / (end-begin));
+ //   printf("Total time: %.3fms\n", (end-begin)*1000);
+    const long int mflop =( (N*N*(N/4)*8) + (N*N*2) ) / 1e6;
+ //   printf("Total MFLOP: %ld\n",mflop);
+ //   printf("MFLOP/s: %lf\n", mflop / (end-begin));
+
+    printf("%ld;%ld;%.3f;%.3f\n",N,mflop,(end-begin)*1000,mflop / (end-begin));
     // ---------- check ----------    
     
     bool success = true;
@@ -71,7 +73,7 @@ int main(int argc, char** argv) {
         }
     }
     
-    printf("Verification: %s\n", (success)?"OK":"FAILED");
+ //   printf("Verification: %s\n", (success)?"OK":"FAILED");
     
     // ---------- cleanup ----------
     

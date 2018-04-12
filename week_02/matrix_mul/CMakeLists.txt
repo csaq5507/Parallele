@@ -16,9 +16,6 @@ IF(OPENCL_FOUND)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenCL_CXX_FLAGS}")
 ENDIF()
 
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic -O3 -std=c11")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -O3 -std=c11")
-
 include_directories(${OpenCL_INCLUDE_DIRS})
 link_directories(${OpenCL_LIBRARY})
 
