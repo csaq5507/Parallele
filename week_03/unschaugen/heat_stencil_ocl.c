@@ -189,13 +189,15 @@ int main(int argc, char** argv) {
     
 
     timestamp end = now();
+    long mflop = N*7*T*T/1000/1000;
+    double timediff_sec = end - begin;
     printf("Total time: %.3fms\n", (end-begin)*1000);
-	printf("Total Kernel time:%.3fms\n",(kernel_nano_seconds)*1000);
-	printf("Total stream to device time:%.3fms\n",(stream_a_to_device_nano_seconds)*1000);
-	printf("Total stream from device time:%.3fms\n",(stream_a_from_device_nano_seconds)*1000);
-	printf("MFlop:%d\n",(T*(500*6)/1000000);
-	printf("MFlop/s:%.3f\n",((T*(500*6)/1000000))/(kernel_nano_seconds*1000000));
-	//T=N*100, 6 operationen pro N, N=500
+	printf("Total Kernel time: %.3fms\n",(kernel_nano_seconds)*1000);
+	printf("Total stream to device time: %.3fms\n",(stream_a_to_device_nano_seconds)*1000) ;
+	printf("Total stream from device time: %.3fms\n",(stream_a_from_device_nano_seconds)*1000);
+	printf("MFlop:%ld\n",mflop);
+	printf("Time difference s: %f\n", timediff_sec);
+	printf("MFlop/s:%.3f\n",(mflop/timediff_sec)); 
 
     // ---------- check ----------    
 
