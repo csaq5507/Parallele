@@ -92,10 +92,9 @@ int main(int argc, char** argv) {
 	clSetKernelArg(kernel, 5, N*N*sizeof(value_t),NULL);
 	
 	// set arguments in kernel for local memory
-	cl_int iLocalPixPitch = 3;
-	cl_int iBlockDimY = 3;
-	clSetKernelArg(kernel, 6, (iLocalPixPitch * (iBlockDimY + 2) * sizeof(cl_mem)), NULL);
-	clSetKernelArg(kernel, 7, sizeof(cl_int), (void*)&iLocalPixPitch);
+	cl_int local_dimensions = 4;
+	clSetKernelArg(kernel, 6, local_dimensions * local_dimensions * sizeof(value_t), NULL);
+	clSetKernelArg(kernel, 7, sizeof(cl_int), &local_dimensions);
     
 
     // for each time step ..
@@ -109,7 +108,8 @@ int main(int argc, char** argv) {
         clSetKernelArg(kernel, 0, sizeof(cl_mem), &devMatA);
         clSetKernelArg(kernel, 1, sizeof(cl_mem), &devMatB);
         size_t size[2] = {N, N}; // two dimensional range
-        CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, size, NULL, 0, NULL, &kernel_execution_event), "Failed to enqueue 2D kernel");
+        size_t local_ws[2] = [local_dimension, local_dimension]
+        CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, size, local_ws, 0, NULL, &kernel_execution_event), "Failed to enqueue 2D kernel");
 
         // swap matrixes (just handles, no content)
         cl_mem tmp = devMatA;
