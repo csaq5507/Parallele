@@ -27,15 +27,23 @@ __kernel void stenci_loc(
 
     if(i_loc == 0 && i != 0)
         mem(a_loc,i_loc-1,j_loc) = mem(A,i-1,j);
+    else
+        mem(a_loc,i_loc-1,j_loc) = mem(A,i,j);
 
     if(j_loc == 0 && j != 0)
         mem(a_loc,i_loc,j_loc-1) = mem(A,i,j-1);
+    else
+        mem(a_loc,i_loc,j_loc-1) = mem(A,i,j);
 
     if(i_loc == (local_work - 1) && i != (N - 1))
         mem(a_loc,i_loc+1,j_loc ) = mem(A,i+1,j);
+    else
+        mem(a_loc,i_loc+1,j_loc ) = mem(A,i,j);
 
     if(j_loc == (local_work - 1) && j != (N - 1))
         mem(a_loc,i_loc,j_loc+1) = mem(A,i,j+1);
+    else
+        mem(a_loc,i_loc,j_loc+1) = mem(A,i,j);
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -58,6 +66,5 @@ __kernel void stenci_loc(
     // update temperature at current point
     mem(B,i,j) = tc + 0.2f * (tl + tr + tu + td + (-4.0f*tc));
     barrier(CLK_GLOBAL_MEM_FENCE);
-
 
 }
