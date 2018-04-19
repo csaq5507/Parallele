@@ -81,21 +81,21 @@ int main(int argc, char** argv) {
     CLU_ERRCHECK(err, "Failed to write matrix A to device");
 
     // Part 4: create kernel from source
-    cl_program program = cluBuildProgramFromFile(context, device_id, "heat_stencil_locmem.cl", NULL);
-    cl_kernel kernel = clCreateKernel(program, "stencil", &err);
+    cl_program program = cluBuildProgramFromFile(context, device_id, "heat_stencli_ivan.cl", NULL);
+    cl_kernel kernel = clCreateKernel(program, "stenci_loc", &err);
     CLU_ERRCHECK(err, "Failed to create mat_mul kernel from program");
 
     // Part 5: set arguments in kernel (those which are constant)
     clSetKernelArg(kernel, 2, sizeof(int), &source_x);
     clSetKernelArg(kernel, 3, sizeof(int), &source_y);
     clSetKernelArg(kernel, 4, sizeof(int), &N);
-	clSetKernelArg(kernel, 5, N*N*sizeof(value_t),NULL);
-	
+
 	// set arguments in kernel for local memory
 	cl_int local_dimensions = 4;
-	clSetKernelArg(kernel, 6, local_dimensions * local_dimensions * sizeof(value_t), NULL);
-	clSetKernelArg(kernel, 7, sizeof(cl_int), &local_dimensions);
-    
+	clSetKernelArg(kernel, 5, sizeof(cl_int), &local_dimensions);
+
+	clSetKernelArg(kernel, 6, sizeof(value_t)*(local_dimensions + 2) * (local_dimensions + 2), NULL);
+
 
     // for each time step ..
     bool dirty = false;
@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
         clSetKernelArg(kernel, 0, sizeof(cl_mem), &devMatA);
         clSetKernelArg(kernel, 1, sizeof(cl_mem), &devMatB);
         size_t size[2] = {N, N}; // two dimensional range
-        size_t local_ws[2] = [local_dimension, local_dimension]
+        size_t local_ws[2] = {local_dimensions, local_dimensions};
         CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, size, local_ws, 0, NULL, &kernel_execution_event), "Failed to enqueue 2D kernel");
 
         // swap matrixes (just handles, no content)
@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
         devMatB = tmp;
 
         // show intermediate step
-        if (!(t%1000)) {
+        if (!((t+1)%1000)) {
 
             // download state of A to host
             err = clEnqueueReadBuffer(command_queue, devMatA, CL_TRUE, 0, N * N * sizeof(value_t), A, 0, NULL, NULL);

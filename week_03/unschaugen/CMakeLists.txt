@@ -17,7 +17,7 @@ include_directories(${OpenCL_INCLUDE_DIRS})
 link_directories(${OpenCL_LIBRARY})
 
 add_executable(week3_ocl heat_stencil_ocl.c)
-add_executable(week3_ocl_locmem heat_stencil_ocl_locmem)
+add_executable(week3_ocl_locmem heat_stencil_ocl_locmem.c)
 
 target_include_directories (week3_ocl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries (week3_ocl ${OpenCL_LIBRARY})
