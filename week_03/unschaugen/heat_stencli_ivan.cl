@@ -13,40 +13,37 @@ __kernel void stenci_loc(
    __local value_t* a_loc
    ) {
 
-
-    // obtain position of this 'thread'
+// obtain position of this 'thread'
     size_t i = get_global_id(0);
     size_t j = get_global_id(1);
 
 	size_t i_loc = get_local_id(0) + 1;
 	size_t j_loc = get_local_id(1) + 1;
 
-
 //Read in local mem
     mem(a_loc,i_loc,j_loc) = mem(A,i,j);
 
     if(i_loc == 0 && i != 0)
         mem(a_loc,i_loc-1,j_loc) = mem(A,i-1,j);
-    else
+    else if (i_loc == 0 && i == 0)
         mem(a_loc,i_loc-1,j_loc) = mem(A,i,j);
 
     if(j_loc == 0 && j != 0)
         mem(a_loc,i_loc,j_loc-1) = mem(A,i,j-1);
-    else
+    else if(j_loc == 0 && j == 0)
         mem(a_loc,i_loc,j_loc-1) = mem(A,i,j);
 
     if(i_loc == (local_work - 1) && i != (N - 1))
         mem(a_loc,i_loc+1,j_loc ) = mem(A,i+1,j);
-    else
+    else if(i_loc == (local_work - 1) && i != (N - 1))
         mem(a_loc,i_loc+1,j_loc ) = mem(A,i,j);
 
     if(j_loc == (local_work - 1) && j != (N - 1))
         mem(a_loc,i_loc,j_loc+1) = mem(A,i,j+1);
-    else
+    else if(j_loc == (local_work - 1) && j == (N - 1))
         mem(a_loc,i_loc,j_loc+1) = mem(A,i,j);
 
     barrier(CLK_LOCAL_MEM_FENCE);
-
 
 //calc point
     if (i == source_x && j == source_y) {
