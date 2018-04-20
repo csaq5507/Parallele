@@ -24,7 +24,7 @@ void printTemperature(Matrix m, int N, int M);
 int main(int argc, char** argv) {
 
     // 'parsing' optional input parameter = problem size
-    int N = 500;
+    int N = 256;
     if (argc > 1) {
         N = atoi(argv[1]);
     }
@@ -36,7 +36,8 @@ int main(int argc, char** argv) {
 
     // create a buffer for storing temperature fields
     Matrix A = createMatrix(N,N);
-    
+    Matrix B = createMatrix(N, N);
+
     // set up initial conditions in A
     for(int i = 0; i<N; i++) {
         for(int j = 0; j<N; j++) {
@@ -111,6 +112,10 @@ int main(int argc, char** argv) {
         size_t local_ws[2] = {local_dimensions, local_dimensions};
         CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, size, local_ws, 0, NULL, &kernel_execution_event), "Failed to enqueue 2D kernel");
 
+
+        err = clEnqueueReadBuffer(command_queue, devMatB, CL_TRUE, 0, N * N * sizeof(value_t), B, 0, NULL, NULL);
+        CLU_ERRCHECK(err, "Failed to read matrix B from device");
+
         // swap matrixes (just handles, no content)
         cl_mem tmp = devMatA;
         devMatA = devMatB;
@@ -120,8 +125,8 @@ int main(int argc, char** argv) {
         if (!((t+1)%1000)) {
 
             // download state of A to host
-            err = clEnqueueReadBuffer(command_queue, devMatA, CL_TRUE, 0, N * N * sizeof(value_t), A, 0, NULL, NULL);
-            CLU_ERRCHECK(err, "Failed to read matrix A from device");
+            err = clEnqueueReadBuffer(command_queue, devMatB, CL_TRUE, 0, N * N * sizeof(value_t), B, 0, NULL, NULL);
+            CLU_ERRCHECK(err, "Failed to read matrix B from device");
 
             // revert dirty flag
             dirty = false;

@@ -36,7 +36,8 @@ int main(int argc, char** argv) {
 
     // create a buffer for storing temperature fields
     Matrix A = createMatrix(N,N);
-    
+    Matrix B = createMatrix(N,N);
+
     // set up initial conditions in A
     for(int i = 0; i<N; i++) {
         for(int j = 0; j<N; j++) {
@@ -71,9 +72,9 @@ int main(int argc, char** argv) {
 
     // Part 2: create memory buffers
     cl_int err;
-    cl_mem devMatA = clCreateBuffer(context, CL_MEM_READ_WRITE, N * N * sizeof(value_t), NULL, &err);
+    cl_mem devMatA = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, N * N * sizeof(value_t), NULL, &err);
     CLU_ERRCHECK(err, "Failed to create buffer for matrix A");
-    cl_mem devMatB = clCreateBuffer(context, CL_MEM_READ_WRITE, N * N * sizeof(value_t), NULL, &err);
+    cl_mem devMatB = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, N * N * sizeof(value_t), NULL, &err);
     CLU_ERRCHECK(err, "Failed to create buffer for matrix B");
 
     // Part 3: fill memory buffers (transfering A is enough, B can be anything)
