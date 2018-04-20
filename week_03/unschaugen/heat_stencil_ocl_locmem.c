@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
 
     // 'parsing' optional input parameter = problem size
     int N = 500;
-    int local_work_size=4;
+    cl_int local_work_size=4;
     if (argc > 1) {
         N = atoi(argv[1]);
     }
@@ -86,8 +86,8 @@ int main(int argc, char** argv) {
     clSetKernelArg(kernel, 2, sizeof(int), &source_x);
     clSetKernelArg(kernel, 3, sizeof(int), &source_y);
     clSetKernelArg(kernel, 4, sizeof(int), &N);
-    clSetKernelArg(kernel, 5, sizeof(int), &local_work_size);
-    clSetKernelArg(kernel, 6, sizeof(float) * (local_work_size + 2) * (local_work_size + 2), NULL);
+    clSetKernelArg(kernel, 5, sizeof(cl_int), &local_work_size);
+    clSetKernelArg(kernel, 6, sizeof(value_t) * (local_work_size + 2) * (local_work_size + 2), NULL);
 
     // for each time step ..
     bool dirty = false;
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
         clSetKernelArg(kernel, 0, sizeof(cl_mem), &devMatA);
         clSetKernelArg(kernel, 1, sizeof(cl_mem), &devMatB);
         size_t size[2] = {N, N}; // two dimensional range
-        size_t local_size[2] = {4, 4}; // two dimensional range
+        size_t local_size[2] = {local_work_size, local_work_size}; // two dimensional range
         CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, size, local_size, 0, NULL, NULL), "Failed to enqueue 2D kernel");
 
         // swap matrixes (just handles, no conent)
