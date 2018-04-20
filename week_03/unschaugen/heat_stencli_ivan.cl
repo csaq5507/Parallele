@@ -20,6 +20,8 @@ __kernel void stenci_loc(
 	size_t i_loc = get_local_id(0) + 1;
 	size_t j_loc = get_local_id(1) + 1;
 
+    if(i>N || j>N) return;
+
 //Read in local mem
     mem(a_loc,i_loc,j_loc) = mem(A,i,j);
 
