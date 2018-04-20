@@ -24,19 +24,19 @@ void printTemperature(Matrix m, int N, int M);
 int main(int argc, char** argv) {
 
     // 'parsing' optional input parameter = problem size
-    int N = 256;
+    int N = 500;
+    int local_work_size=4;
     if (argc > 1) {
         N = atoi(argv[1]);
     }
     int T = N*100;
     printf("Computing heat-distribution for room size N=%d for T=%d timesteps\n", N, T);
 
-    
+
     // ---------- setup ----------
 
     // create a buffer for storing temperature fields
     Matrix A = createMatrix(N,N);
-    Matrix B = createMatrix(N, N);
 
     // set up initial conditions in A
     for(int i = 0; i<N; i++) {
@@ -52,17 +52,13 @@ int main(int argc, char** argv) {
 
     printf("Initial:\n");
     printTemperature(A,N,N);
-    
+
     // ---------- compute ----------
-	
-	cl_event kernel_execution_event;
-	cl_event stream_a_to_device;
-	cl_event stream_a_from_device;
-	
+
     timestamp begin = now();
 
     // -- BEGIN ASSIGNMENT --
-    
+
     // - setup -
 
     // Part 1: ocl initialization
@@ -78,7 +74,7 @@ int main(int argc, char** argv) {
     CLU_ERRCHECK(err, "Failed to create buffer for matrix B");
 
     // Part 3: fill memory buffers (transfering A is enough, B can be anything)
-    err = clEnqueueWriteBuffer(command_queue, devMatA, CL_TRUE, 0, N * N * sizeof(value_t), A, 0, NULL,  &stream_a_to_device);
+    err = clEnqueueWriteBuffer(command_queue, devMatA, CL_TRUE, 0, N * N * sizeof(value_t), A, 0, NULL, NULL);
     CLU_ERRCHECK(err, "Failed to write matrix A to device");
 
     // Part 4: create kernel from source
@@ -90,13 +86,8 @@ int main(int argc, char** argv) {
     clSetKernelArg(kernel, 2, sizeof(int), &source_x);
     clSetKernelArg(kernel, 3, sizeof(int), &source_y);
     clSetKernelArg(kernel, 4, sizeof(int), &N);
-
-	// set arguments in kernel for local memory
-	cl_int local_dimensions = 4;
-	clSetKernelArg(kernel, 5, sizeof(cl_int), &local_dimensions);
-
-	clSetKernelArg(kernel, 6, sizeof(value_t)*(local_dimensions + 2) * (local_dimensions + 2), NULL);
-
+    clSetKernelArg(kernel, 5, sizeof(int), &local_work_size);
+    clSetKernelArg(kernel, 6, sizeof(float) * (local_work_size + 2) * (local_work_size + 2), NULL);
 
     // for each time step ..
     bool dirty = false;
@@ -109,24 +100,20 @@ int main(int argc, char** argv) {
         clSetKernelArg(kernel, 0, sizeof(cl_mem), &devMatA);
         clSetKernelArg(kernel, 1, sizeof(cl_mem), &devMatB);
         size_t size[2] = {N, N}; // two dimensional range
-        size_t local_ws[2] = {local_dimensions, local_dimensions};
-        CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, size, local_ws, 0, NULL, &kernel_execution_event), "Failed to enqueue 2D kernel");
+        size_t local_size[2] = {4, 4}; // two dimensional range
+        CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, size, local_size, 0, NULL, NULL), "Failed to enqueue 2D kernel");
 
-
-        err = clEnqueueReadBuffer(command_queue, devMatB, CL_TRUE, 0, N * N * sizeof(value_t), B, 0, NULL, NULL);
-        CLU_ERRCHECK(err, "Failed to read matrix B from device");
-
-        // swap matrixes (just handles, no content)
+        // swap matrixes (just handles, no conent)
         cl_mem tmp = devMatA;
         devMatA = devMatB;
         devMatB = tmp;
 
         // show intermediate step
-        if (!((t+1)%1000)) {
+        if (!(t%1000)) {
 
             // download state of A to host
-            err = clEnqueueReadBuffer(command_queue, devMatB, CL_TRUE, 0, N * N * sizeof(value_t), B, 0, NULL, NULL);
-            CLU_ERRCHECK(err, "Failed to read matrix B from device");
+            err = clEnqueueReadBuffer(command_queue, devMatA, CL_TRUE, 0, N * N * sizeof(value_t), A, 0, NULL, NULL);
+            CLU_ERRCHECK(err, "Failed to read matrix A from device");
 
             // revert dirty flag
             dirty = false;
@@ -140,16 +127,12 @@ int main(int argc, char** argv) {
     // get back final version of A
     if (dirty) {
         // download state of A to host
-        err = clEnqueueReadBuffer(command_queue, devMatA, CL_TRUE, 0, N * N * sizeof(value_t), A, 0, NULL, &stream_a_from_device);
+        err = clEnqueueReadBuffer(command_queue, devMatA, CL_TRUE, 0, N * N * sizeof(value_t), A, 0, NULL, NULL);
         CLU_ERRCHECK(err, "Failed to read matrix A from device");
     }
 
     // Part 7: cleanup
-    // wait for completed operations 
-	clWaitForEvents(1, &kernel_execution_event);
-	clWaitForEvents(1, &stream_a_to_device);
-	clWaitForEvents(1, &stream_a_from_device);
-	
+    // wait for completed operations (there should be none)
     CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
     CLU_ERRCHECK(clFinish(command_queue),   "Failed to wait for command queue completion");
     CLU_ERRCHECK(clReleaseKernel(kernel),   "Failed to release kernel");
@@ -162,60 +145,19 @@ int main(int argc, char** argv) {
     // free management resources
     CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
     CLU_ERRCHECK(clReleaseContext(context),            "Failed to release OpenCL context");
-	
-	
-	
-	// evaluate events
-	cl_ulong time_start;
-	cl_ulong time_end;
-
-	// kernel
-	clGetEventProfilingInfo(kernel_execution_event,
-				CL_PROFILING_COMMAND_START, sizeof(time_start),
-				&time_start, NULL);
-	clGetEventProfilingInfo(kernel_execution_event,
-				CL_PROFILING_COMMAND_END, sizeof(time_end),
-				&time_end, NULL);
-
-	double kernel_nano_seconds = time_end - time_start;
-
-
-	// stream a to device
-	clGetEventProfilingInfo(stream_a_to_device, CL_PROFILING_COMMAND_START,
-				sizeof(time_start), &time_start, NULL);
-	clGetEventProfilingInfo(stream_a_to_device, CL_PROFILING_COMMAND_END,
-				sizeof(time_end), &time_end, NULL);
-
-	double stream_a_to_device_nano_seconds = time_end - time_start;
-
-	// stream a from device
-	clGetEventProfilingInfo(stream_a_from_device, CL_PROFILING_COMMAND_START,
-				sizeof(time_start), &time_start, NULL);
-	clGetEventProfilingInfo(stream_a_from_device, CL_PROFILING_COMMAND_END,
-				sizeof(time_end), &time_end, NULL);
-
-	double stream_a_from_device_nano_seconds = time_end - time_start;
-
 
     // -- END ASSIGNMENT --
-    
+
 
     timestamp end = now();
-    long mflop = N*7*T*T/1000/1000;
-    double timediff_sec = end - begin;
     printf("Total time: %.3fms\n", (end-begin)*1000);
-	printf("Total Kernel time: %.3fms\n",(kernel_nano_seconds)*1000);
-	printf("Total stream to device time: %.3fms\n",(stream_a_to_device_nano_seconds)*1000) ;
-	printf("Total stream from device time: %.3fms\n",(stream_a_from_device_nano_seconds)*1000);
-	printf("MFlop:%ld\n",mflop);
-	printf("Time difference s: %f\n", timediff_sec);
-	printf("MFlop/s:%.3f\n",(mflop/timediff_sec));
 
-    // ---------- check ----------    
+
+    // ---------- check ----------
 
     printf("Final:\n");
     printTemperature(A,N,N);
-    
+
     bool success = true;
     for(long long i = 0; i<N; i++) {
         for(long long j = 0; j<N; j++) {
@@ -225,13 +167,13 @@ int main(int argc, char** argv) {
             break;
         }
     }
-    
+
     printf("Verification: %s\n", (success)?"OK":"FAILED");
-    
+
     // ---------- cleanup ----------
-    
+
     releaseMatrix(A);
-    
+
     // done
     return (success) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
@@ -303,4 +245,3 @@ void printTemperature(Matrix m, int N, int M) {
     printf("\n");
 
 }
-
