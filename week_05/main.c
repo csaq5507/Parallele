@@ -5,7 +5,7 @@
 #include "utils.h"
 #include "cl_utils.h"
 
-#define OCL
+//#define OMP
 
 void print_usage(char** argv)
 {
