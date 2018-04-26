@@ -27,7 +27,7 @@ int count_one_ocl(int * array, long N)
 {
     cl_event kernel_execution_event;
 
-    const int local_work_size = 128;
+    const int local_work_size = 64;
     int local_groups = (N % local_work_size != 0)? (N / local_work_size) + 1 : N / local_work_size;
     int local_groups1 = local_groups;
     N = local_groups * local_work_size;
