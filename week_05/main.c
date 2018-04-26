@@ -15,7 +15,6 @@ void fill_array(int * array, int N)
 {
     for(long i=0; i<N;i++)
         array[i]=rand()%2;
-    printf("Array filled.\n");
 }
 
 //Actual Task, parallelize this function
@@ -27,7 +26,7 @@ int count_one_ocl(int * array, long N)
 {
     cl_event kernel_execution_event;
 
-    const int local_work_size = 64;
+    const int local_work_size = 1024;
     int local_groups = (N % local_work_size != 0)? (N / local_work_size) + 1 : N / local_work_size;
     int local_groups1 = local_groups;
     N = local_groups * local_work_size;
@@ -154,7 +153,7 @@ int main(int argc, char** argv) {
     }
     srand((unsigned) time(&t));
 
-    printf("Your input is: %ld\n", N);
+    printf("N: %ld\n", N);
 
     int* bytearray = malloc(sizeof(int)*N);
     fill_array(bytearray,N);
@@ -162,18 +161,18 @@ int main(int argc, char** argv) {
     timestamp begin = now();
     long count_seq = count_one_seq(bytearray,N);
     timestamp end = now();
-    printf("Count SEQ: %ld ones in %.3fms\n",count_seq, (end-begin)*1000);
+    printf("%.3f;",(end-begin)*1000);
     begin = now();
     long count_omp = count_one_omp(bytearray,N);
     end = now();
-    printf("Count OMP: %ld ones in %.3fms\n",count_omp, (end-begin)*1000);
+    printf("%.3f;",(end-begin)*1000);
     begin = now();
     long count_ocl = count_one_ocl(bytearray,N);
     end = now();
 
-    printf("Count OCL: %ld ones in %.3fms; kernel_execution_time: %.3fms\n",count_ocl, (end-begin)*1000,kernel_nanoseconds / 1000000);
+    printf("%.3f\n",kernel_nanoseconds / 1000000);
 
-    printf("Verification: %s\n %ld / %ld = %f ~ 0.5\n",(count_ocl==count_omp)?(count_ocl==count_seq)?"All Same -> OK":"Not OK":"Not OK",count_seq,N,((double)count_seq)/((double)N));
+    printf("Verification: %s\n",(count_ocl==count_omp)?(count_ocl==count_seq)?"OK":"Not OK":"Not OK");
 
     free(bytearray);
     return(EXIT_SUCCESS);
