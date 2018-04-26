@@ -1,0 +1,227 @@
+local_work_size = 128;
+
+N: 8000000
+2.132;3.237;2.718
+Verification: OK
+N: 8000000
+2.377;1.847;2.718
+Verification: OK
+N: 8000000
+2.347;2.902;2.718
+Verification: OK
+N: 16000000
+4.494;4.385;5.409
+Verification: OK
+N: 16000000
+4.591;4.636;5.408
+Verification: OK
+N: 16000000
+4.336;4.717;5.407
+Verification: OK
+N: 32000000
+8.706;7.537;10.790
+Verification: OK
+N: 32000000
+8.459;7.261;10.790
+Verification: OK
+N: 32000000
+8.737;7.573;10.792
+Verification: OK
+N: 64000000
+17.007;12.973;21.557
+Verification: OK
+N: 64000000
+16.703;13.412;21.563
+Verification: OK
+N: 64000000
+16.701;13.320;21.563
+Verification: OK
+N: 128000000
+33.018;24.570;43.089
+Verification: OK
+N: 128000000
+33.651;24.634;43.503
+Verification: OK
+N: 128000000
+33.513;24.874;39.323
+Verification: OK
+N: 256000000
+65.916;47.957;78.625
+Verification: OK
+N: 256000000
+66.579;51.506;84.935
+Verification: OK
+N: 256000000
+68.618;48.049;78.672
+Verification: OK
+
+local_work_size = 256;
+
+N: 8000000
+2.355;1.802;2.904
+Verification: OK
+N: 8000000
+2.156;3.045;2.904
+Verification: OK
+N: 8000000
+2.311;2.928;2.904
+Verification: OK
+N: 16000000
+4.926;3.165;5.786
+Verification: OK
+N: 16000000
+4.450;4.501;5.788
+Verification: OK
+N: 16000000
+5.054;4.746;5.791
+Verification: OK
+N: 32000000
+8.780;7.248;11.565
+Verification: OK
+N: 32000000
+8.872;7.539;11.563
+Verification: OK
+N: 32000000
+8.699;7.438;11.567
+Verification: OK
+N: 64000000
+16.927;13.101;23.100
+Verification: OK
+N: 64000000
+16.930;13.035;23.102
+Verification: OK
+N: 64000000
+16.686;13.427;23.103
+Verification: OK
+N: 128000000
+33.453;24.876;46.181
+Verification: OK
+N: 128000000
+34.577;24.888;47.155
+Verification: OK
+N: 128000000
+34.501;24.535;42.160
+Verification: OK
+N: 256000000
+66.371;47.864;84.302
+Verification: OK
+N: 256000000
+66.581;47.917;84.313
+Verification: OK
+N: 256000000
+68.626;47.865;84.300
+Verification: OK
+
+
+local_work_size = 512;
+N: 8000000
+2.228;3.224;3.232
+Verification: OK
+N: 8000000
+2.365;2.812;3.228
+Verification: OK
+N: 8000000
+2.372;3.243;3.580
+Verification: OK
+N: 16000000
+4.526;4.386;6.440
+Verification: OK
+N: 16000000
+4.414;3.269;6.441
+Verification: OK
+N: 16000000
+4.378;4.507;6.439
+Verification: OK
+N: 32000000
+8.699;8.276;12.864
+Verification: OK
+N: 32000000
+8.564;7.535;12.853
+Verification: OK
+N: 32000000
+8.572;7.354;12.853
+Verification: OK
+N: 64000000
+17.093;11.931;25.693
+Verification: OK
+N: 64000000
+16.574;13.327;25.693
+Verification: OK
+N: 64000000
+16.973;13.325;25.702
+Verification: OK
+N: 128000000
+33.682;24.912;51.373
+Verification: OK
+N: 128000000
+33.564;24.819;47.288
+Verification: OK
+N: 128000000
+33.810;25.252;46.952
+Verification: OK
+N: 256000000
+66.301;47.806;93.906
+Verification: OK
+N: 256000000
+68.979;47.879;93.932
+Verification: OK
+N: 256000000
+68.443;46.612;93.904
+Verification: OK
+
+local_work_size = 1024;
+
+N: 8000000
+2.391;3.262;3.673
+Verification: Not OK
+N: 8000000
+2.300;3.012;3.672
+Verification: Not OK
+N: 8000000
+2.139;2.847;3.683
+Verification: Not OK
+N: 16000000
+4.284;4.638;7.322
+Verification: OK
+N: 16000000
+4.189;4.393;7.321
+Verification: OK
+N: 16000000
+4.444;3.573;7.324
+Verification: OK
+N: 32000000
+8.489;7.561;14.623
+Verification: OK
+N: 32000000
+8.547;7.273;14.627
+Verification: OK
+N: 32000000
+8.664;7.238;14.629
+Verification: OK
+N: 64000000
+16.994;13.312;29.224
+Verification: OK
+N: 64000000
+16.745;13.366;29.227
+Verification: OK
+N: 64000000
+16.916;13.335;29.235
+Verification: OK
+N: 128000000
+33.363;24.703;58.441
+Verification: OK
+N: 128000000
+33.833;24.650;58.800
+Verification: OK
+N: 128000000
+34.095;24.871;53.449
+Verification: OK
+N: 256000000
+65.968;48.122;106.888
+Verification: OK
+N: 256000000
+68.215;47.580;106.892
+Verification: OK
+N: 256000000
+66.116;47.128;106.893
+Verification: OK
