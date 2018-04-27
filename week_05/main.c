@@ -15,9 +15,8 @@ void fill_array(int * array, int N)
 {
     for(long i=0; i<N;i++)
         array[i]=rand()%2;
+    printf("Array filled.\n");
 }
-
-//Actual Task, parallelize this function
 
 double kernel_nanoseconds = 0;
 
@@ -28,8 +27,7 @@ int count_one_ocl(int * array, long N)
 
     const int local_work_size = 1024;
     int local_groups = (N % local_work_size != 0)? (N / local_work_size) + 1 : N / local_work_size;
-    int local_groups1 = local_groups;
-    N = local_groups * local_work_size;
+    int global_work_size = local_groups * local_work_size;
 
     cl_context context;
     cl_command_queue command_queue;
@@ -60,15 +58,16 @@ int count_one_ocl(int * array, long N)
 
         clSetKernelArg(kernel, 2, sizeof(long), &N);
         clSetKernelArg(kernel, 3, sizeof(long), &local_groups);
-        size_t size[1] = {N}; // two dimensional range
+        size_t size[1] = {global_work_size}; // two dimensional range
 
         CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, size, local_size, 0, NULL,
                                             &kernel_execution_event), "Failed to enqueue 1D kernel");
 
         if(local_groups < 2)
             break;
-        local_groups = (local_groups % local_work_size != 0)? (local_groups / local_work_size) + 1 : local_groups / local_work_size;
-        N = local_groups * local_work_size;
+        N = local_groups;
+        local_groups = ((local_groups/2) % local_work_size != 0)? ((local_groups/2) / local_work_size) + 1 : (local_groups/2) / local_work_size;
+        global_work_size = local_groups * local_work_size;
         // evaluate events
         cl_ulong time_start;
         cl_ulong time_end;
@@ -86,7 +85,7 @@ int count_one_ocl(int * array, long N)
         kernel_nanoseconds+=(time_end - time_start);
     }
 
-    err = clEnqueueReadBuffer(command_queue, dev_array, CL_TRUE, 0, sizeof(int) * local_groups1, array, 0, NULL, NULL);
+    err = clEnqueueReadBuffer(command_queue, dev_array, CL_TRUE, 0, sizeof(int), array, 0, NULL, NULL);
     CLU_ERRCHECK(err, "Failed to read counter from device");
     // Part 7: cleanup
     // wait for completed operations
@@ -153,7 +152,7 @@ int main(int argc, char** argv) {
     }
     srand((unsigned) time(&t));
 
-    printf("N: %ld\n", N);
+    printf("Your input is: %ld\n", N);
 
     int* bytearray = malloc(sizeof(int)*N);
     fill_array(bytearray,N);
@@ -161,18 +160,18 @@ int main(int argc, char** argv) {
     timestamp begin = now();
     long count_seq = count_one_seq(bytearray,N);
     timestamp end = now();
-    printf("%.3f;",(end-begin)*1000);
+    printf("Count SEQ: %ld ones in %.3fms\n",count_seq, (end-begin)*1000);
     begin = now();
     long count_omp = count_one_omp(bytearray,N);
     end = now();
-    printf("%.3f;",(end-begin)*1000);
+    printf("Count OMP: %ld ones in %.3fms\n",count_omp, (end-begin)*1000);
     begin = now();
     long count_ocl = count_one_ocl(bytearray,N);
     end = now();
 
-    printf("%.3f\n",kernel_nanoseconds / 1000000);
+    printf("Count OCL: %ld ones in %.3fms; kernel_execution_time: %.3fms\n",count_ocl, (end-begin)*1000,kernel_nanoseconds / 1000000);
 
-    printf("Verification: %s\n",(count_ocl==count_omp)?(count_ocl==count_seq)?"OK":"Not OK":"Not OK");
+    printf("Verification: %s\n %ld / %ld = %f ~ 0.5\n",(count_ocl==count_omp)?(count_ocl==count_seq)?"OK":"Not OK":"Not OK",count_seq,N,((double)count_seq)/((double)N));
 
     free(bytearray);
     return(EXIT_SUCCESS);

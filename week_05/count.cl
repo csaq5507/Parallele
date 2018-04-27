@@ -25,7 +25,6 @@ __kernel void count_one(
     if(local_index == 0) {
         array[get_group_id(0)] = scratch[0];
     }
-    if(global_index < length && global_index >= group_size)
-        array[global_index] = 0;
+
 
 }
