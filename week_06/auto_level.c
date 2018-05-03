@@ -343,10 +343,10 @@ double auto_level_ocl(char * in, char * out)
 
     // Part 4: create kernel from source
     cl_program program = cluBuildProgramFromFile(context, device_id, "auto_level.cl", NULL);
+
+    ///////////////////CALC MIN
     cl_kernel kernelmin = clCreateKernel(program, "compute_min", &err);
     CLU_ERRCHECK(err, "Failed to create kernel from program");
- //   cl_kernel kernelmax = clCreateKernel(program, "compute_min", &err);
-  //  CLU_ERRCHECK(err, "Failed to create kernel from program");
     // Part 5: set arguments in kernel (those which are constant)
     clSetKernelArg(kernelmin, 0, sizeof(cl_mem), &dev_array);
     clSetKernelArg(kernelmin, 6, sizeof(int), &components);
@@ -367,8 +367,10 @@ double auto_level_ocl(char * in, char * out)
         clSetKernelArg(kernelmin, 2, sizeof(int), &temp_width);
         clSetKernelArg(kernelmin, 3, sizeof(int), &temp_height);
 
+
         clSetKernelArg(kernelmin, 4, sizeof(int), &local_x_size);
         clSetKernelArg(kernelmin, 5, sizeof(int), &local_y_size);
+
 
         CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernelmin, 2, NULL, size, local_size, 0, NULL,
                                             &kernel_execution_event), "Failed to enqueue 1D kernel");
@@ -401,13 +403,149 @@ double auto_level_ocl(char * in, char * out)
             break;
     }
 
-    err = clEnqueueReadBuffer(command_queue, dev_array, CL_TRUE, 0, sizeof(char)*128*components, data, 0, NULL, NULL);
+    err = clEnqueueReadBuffer(command_queue, dev_array, CL_TRUE, 0, sizeof(char)*components, min_val, 0, NULL, NULL);
     CLU_ERRCHECK(err, "Failed to read counter from device");
     // Part 7: cleanup
     // wait for completed operations
     CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
-    CLU_ERRCHECK(clFinish(command_queue),   "Failed to wait for command queue completion");
     CLU_ERRCHECK(clReleaseKernel(kernelmin),   "Failed to release kernel");
+
+
+    //////////////CALC MAX
+
+     kernelmin = clCreateKernel(program, "compute_max", &err);
+    CLU_ERRCHECK(err, "Failed to create kernel from program");
+    // Part 5: set arguments in kernel (those which are constant)
+    clSetKernelArg(kernelmin, 0, sizeof(cl_mem), &dev_array);
+    clSetKernelArg(kernelmin, 6, sizeof(int), &components);
+
+    // enqeue a kernel call for the current time step
+    kernel_nanoseconds = 0.0;
+    temp_width = width;
+    temp_height = height;
+
+
+    while(true) {
+
+        clSetKernelArg(kernelmin, 1, sizeof(char) * (local_x_size * 2) * (local_y_size * 2) * components, NULL);
+
+        size_t size[2] = {global_x_size,global_y_size};
+        size_t local_size[2] = {local_x_size,local_y_size};
+
+        clSetKernelArg(kernelmin, 2, sizeof(int), &temp_width);
+        clSetKernelArg(kernelmin, 3, sizeof(int), &temp_height);
+
+
+        clSetKernelArg(kernelmin, 4, sizeof(int), &local_x_size);
+        clSetKernelArg(kernelmin, 5, sizeof(int), &local_y_size);
+
+
+        CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernelmin, 2, NULL, size, local_size, 0, NULL,
+                                            &kernel_execution_event), "Failed to enqueue 1D kernel");
+
+        temp_width /= 2;
+        temp_height /= 2;
+        global_x_size /= 2;
+        global_y_size /= 2;
+        local_x_size /= 2;
+        local_y_size /= 2;
+
+
+
+        // evaluate events
+        cl_ulong time_start;
+        cl_ulong time_end;
+
+        // kernel
+        clWaitForEvents(1, &kernel_execution_event);
+
+        clGetEventProfilingInfo(kernel_execution_event,
+                                CL_PROFILING_COMMAND_START, sizeof(time_start),
+                                &time_start, NULL);
+        clGetEventProfilingInfo(kernel_execution_event,
+                                CL_PROFILING_COMMAND_END, sizeof(time_end),
+                                &time_end, NULL);
+
+        kernel_nanoseconds+=(time_end - time_start);
+        if(temp_width < 128)
+            break;
+    }
+
+    err = clEnqueueReadBuffer(command_queue, dev_array, CL_TRUE, 0, sizeof(char)*components, max_val, 0, NULL, NULL);
+    CLU_ERRCHECK(err, "Failed to read counter from device");
+    // Part 7: cleanup
+    // wait for completed operations
+    CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
+    CLU_ERRCHECK(clReleaseKernel(kernelmin),   "Failed to release kernel");
+
+//////////////// CALC SUM
+
+    kernelmin = clCreateKernel(program, "compute_sum", &err);
+    CLU_ERRCHECK(err, "Failed to create kernel from program");
+    // Part 5: set arguments in kernel (those which are constant)
+    clSetKernelArg(kernelmin, 0, sizeof(cl_mem), &dev_array);
+    clSetKernelArg(kernelmin, 6, sizeof(int), &components);
+
+    // enqeue a kernel call for the current time step
+    kernel_nanoseconds = 0.0;
+    temp_width = width;
+    temp_height = height;
+
+
+    while(true) {
+
+        clSetKernelArg(kernelmin, 1, sizeof(char) * (local_x_size * 2) * (local_y_size * 2) * components, NULL);
+
+        size_t size[2] = {global_x_size,global_y_size};
+        size_t local_size[2] = {local_x_size,local_y_size};
+
+        clSetKernelArg(kernelmin, 2, sizeof(int), &temp_width);
+        clSetKernelArg(kernelmin, 3, sizeof(int), &temp_height);
+
+
+        clSetKernelArg(kernelmin, 4, sizeof(int), &local_x_size);
+        clSetKernelArg(kernelmin, 5, sizeof(int), &local_y_size);
+
+
+        CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernelmin, 2, NULL, size, local_size, 0, NULL,
+                                            &kernel_execution_event), "Failed to enqueue 1D kernel");
+
+        temp_width /= 2;
+        temp_height /= 2;
+        global_x_size /= 2;
+        global_y_size /= 2;
+        local_x_size /= 2;
+        local_y_size /= 2;
+
+
+
+        // evaluate events
+        cl_ulong time_start;
+        cl_ulong time_end;
+
+        // kernel
+        clWaitForEvents(1, &kernel_execution_event);
+
+        clGetEventProfilingInfo(kernel_execution_event,
+                                CL_PROFILING_COMMAND_START, sizeof(time_start),
+                                &time_start, NULL);
+        clGetEventProfilingInfo(kernel_execution_event,
+                                CL_PROFILING_COMMAND_END, sizeof(time_end),
+                                &time_end, NULL);
+
+        kernel_nanoseconds+=(time_end - time_start);
+        if(temp_width < 128)
+            break;
+    }
+
+    err = clEnqueueReadBuffer(command_queue, dev_array, CL_TRUE, 0, sizeof(char)*components, sum, 0, NULL, NULL);
+    CLU_ERRCHECK(err, "Failed to read counter from device");
+    // Part 7: cleanup
+    // wait for completed operations
+    CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
+    CLU_ERRCHECK(clReleaseKernel(kernelmin),   "Failed to release kernel");
+
+    CLU_ERRCHECK(clFinish(command_queue),   "Failed to wait for command queue completion");
     CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
 
     // free device memory
@@ -417,21 +555,6 @@ double auto_level_ocl(char * in, char * out)
     CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
     CLU_ERRCHECK(clReleaseContext(context),            "Failed to release OpenCL context");
 
-
-    // compute min/max/sub
-
-//*******************************************************
-    // Sequentially optimized by loop order ( cache misses )
-    for(int y=0; y<height; ++y) {
-        for(int x=0; x<width; ++x) {
-            for(int c=0; c<components; ++c) {
-                unsigned char val = data[c + x*components + y*width*components];
-                if (val < min_val[c]) min_val[c] = val;
-                if (val > max_val[c]) max_val[c] = val;
-                sum[c] += val;
-            }
-        }
-    }
 
     // compute average and multiplicative factors
     float min_fac[components];
