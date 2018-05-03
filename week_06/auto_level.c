@@ -83,7 +83,11 @@ double auto_level_original(char * in, char * out)
 
     if(DEBUG)
         printf("Writing output image %s ...\n", out);
-    stbi_write_png(out,width,height,components,data,width*components);
+
+    char temp[80];
+    strcpy(temp,out);
+    strcat(temp,".original.png");
+    stbi_write_png(temp,width,height,components,data,width*components);
     stbi_image_free(data);
 
     if(DEBUG)
@@ -172,7 +176,11 @@ double auto_level_seq(char * in, char * out)
 
     if(DEBUG)
         printf("Writing output image %s ...\n", out);
-    stbi_write_png(out,width,height,components,data,width*components);
+
+    char temp[80];
+    strcpy(temp,out);
+    strcat(temp,".seq_opt.png");
+    stbi_write_png(temp,width,height,components,data,width*components);
     stbi_image_free(data);
 
     if(DEBUG)
@@ -352,7 +360,7 @@ double auto_level_ocl(char * in, char * out)
 
     char temp[80];
     strcpy(temp,out);
-    strcat(temp,".omp.png");
+    strcat(temp,".ocl.png");
     stbi_write_png(temp,width,height,components,data,width*components);
     stbi_image_free(data);
 
@@ -365,7 +373,7 @@ int main(int argc, char** argv) {
 
     // parse input parameters
     if(argc != 3) {
-        printf("Usage: auto_levels [inputfile] [outputfile]\nExample: %s test.png test_out.png\n", argv[0]);
+        printf("Usage: auto_levels [inputfile] [outputfile]\nExample: %s test.png test_out\n", argv[0]);
         return EXIT_FAILURE;
     }
 
