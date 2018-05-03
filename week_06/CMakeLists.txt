@@ -21,7 +21,7 @@ include_directories(${OpenCL_INCLUDE_DIRS})
 link_directories(${OpenCL_LIBRARY})
 SET(HEADERS stb/image.h stb/image_write.h)
 
-add_executable(auto_level auto_level_seq.c ${HEADERS})
+add_executable(auto_level auto_level.c ${HEADERS})
 
 target_include_directories (auto_level PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} stb)
 target_link_libraries (auto_level ${OpenCL_LIBRARY} ${OpenMP_LIBRARY} m)
