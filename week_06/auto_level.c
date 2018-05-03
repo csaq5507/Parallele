@@ -308,51 +308,80 @@ double auto_level_ocl(char * in, char * out)
 
     cl_event kernel_execution_event;
 
-    const int local_x_size = 128;
-    const int local_y_size = 128;
+    const int local_work_size = 32;
 
-    int local_groups = ( % local_work_size != 0)? (N / local_work_size) + 1 : N / local_work_size;
-    int global_work_size = local_groups * local_work_size;
+    int local_x_size = width;
+    int local_y_size = height;
+    int counter=0;
+    while(local_x_size > local_work_size || local_y_size > local_work_size)
+    {
+        counter++;
+        local_x_size = ceil(local_x_size / 2.0);
+        local_y_size = ceil(local_y_size / 2.0);
+    }
+
+    int global_x_size = local_x_size;
+    int global_y_size = local_y_size;
+
+    for (int i = 0; i < counter-1; ++i) {
+        global_x_size*=2;
+        global_y_size*=2;
+    }
+
 
     cl_context context;
     cl_command_queue command_queue;
     cl_device_id device_id = cluInitDevice(0, &context, &command_queue);
 
     cl_int err;
-    cl_mem dev_array = clCreateBuffer(context, CL_MEM_READ_WRITE , N * sizeof(int), NULL, &err);
+    cl_mem dev_array = clCreateBuffer(context, CL_MEM_READ_WRITE , width*height*components*sizeof(char), NULL, &err);
     CLU_ERRCHECK(err, "Failed to create buffer for bytearray");
 
     // Part 3: fill memory buffers (transfering A is enough, B can be anything)
-    err = clEnqueueWriteBuffer(command_queue, dev_array, CL_TRUE, 0, N  * sizeof(int), array, 0, NULL,  NULL);
+    err = clEnqueueWriteBuffer(command_queue, dev_array, CL_TRUE, 0, width*height*components*sizeof(char), data, 0, NULL,  NULL);
     CLU_ERRCHECK(err, "Failed to fill buffer");
 
     // Part 4: create kernel from source
-    cl_program program = cluBuildProgramFromFile(context, device_id, "count.cl", NULL);
-    cl_kernel kernel = clCreateKernel(program, "count_one", &err);
+    cl_program program = cluBuildProgramFromFile(context, device_id, "auto_level.cl", NULL);
+    cl_kernel kernelmin = clCreateKernel(program, "compute_min", &err);
     CLU_ERRCHECK(err, "Failed to create kernel from program");
-
+ //   cl_kernel kernelmax = clCreateKernel(program, "compute_min", &err);
+  //  CLU_ERRCHECK(err, "Failed to create kernel from program");
     // Part 5: set arguments in kernel (those which are constant)
-    clSetKernelArg(kernel, 0, sizeof(cl_mem), &dev_array);
-    clSetKernelArg(kernel, 1, sizeof(int) * local_work_size, NULL);
+    clSetKernelArg(kernelmin, 0, sizeof(cl_mem), &dev_array);
+    clSetKernelArg(kernelmin, 6, sizeof(int), &components);
 
     // enqeue a kernel call for the current time step
-    size_t local_size[1] = {local_work_size}; // two dimensional range
     kernel_nanoseconds = 0.0;
+    int temp_width = width;
+    int temp_height = height;
+
+
     while(true) {
 
+        clSetKernelArg(kernelmin, 1, sizeof(char) * (local_x_size * 2) * (local_y_size * 2) * components, NULL);
 
-        clSetKernelArg(kernel, 2, sizeof(long), &N);
-        clSetKernelArg(kernel, 3, sizeof(long), &local_groups);
-        size_t size[1] = {global_work_size}; // two dimensional range
+        size_t size[2] = {global_x_size,global_y_size};
+        size_t local_size[2] = {local_x_size,local_y_size};
 
-        CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, size, local_size, 0, NULL,
+        clSetKernelArg(kernelmin, 2, sizeof(int), &temp_width);
+        clSetKernelArg(kernelmin, 3, sizeof(int), &temp_height);
+
+        clSetKernelArg(kernelmin, 4, sizeof(int), &local_x_size);
+        clSetKernelArg(kernelmin, 5, sizeof(int), &local_y_size);
+
+        CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernelmin, 2, NULL, size, local_size, 0, NULL,
                                             &kernel_execution_event), "Failed to enqueue 1D kernel");
 
-        if(local_groups < 2)
-            break;
-        N = local_groups;
-        local_groups = ((local_groups/2) % local_work_size != 0)? ((local_groups/2) / local_work_size) + 1 : (local_groups/2) / local_work_size;
-        global_work_size = local_groups * local_work_size;
+        temp_width /= 2;
+        temp_height /= 2;
+        global_x_size /= 2;
+        global_y_size /= 2;
+        local_x_size /= 2;
+        local_y_size /= 2;
+
+
+
         // evaluate events
         cl_ulong time_start;
         cl_ulong time_end;
@@ -368,15 +397,17 @@ double auto_level_ocl(char * in, char * out)
                                 &time_end, NULL);
 
         kernel_nanoseconds+=(time_end - time_start);
+        if(temp_width < 128)
+            break;
     }
 
-    err = clEnqueueReadBuffer(command_queue, dev_array, CL_TRUE, 0, sizeof(int), array, 0, NULL, NULL);
+    err = clEnqueueReadBuffer(command_queue, dev_array, CL_TRUE, 0, sizeof(char)*128*components, data, 0, NULL, NULL);
     CLU_ERRCHECK(err, "Failed to read counter from device");
     // Part 7: cleanup
     // wait for completed operations
     CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
     CLU_ERRCHECK(clFinish(command_queue),   "Failed to wait for command queue completion");
-    CLU_ERRCHECK(clReleaseKernel(kernel),   "Failed to release kernel");
+    CLU_ERRCHECK(clReleaseKernel(kernelmin),   "Failed to release kernel");
     CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
 
     // free device memory

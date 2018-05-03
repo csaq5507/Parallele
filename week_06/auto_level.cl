@@ -17,34 +17,35 @@ __kernel void compute_min(
     int l_y = get_local_id(1);
     int gid = get_group_id(0);
 
-    if(g_x < w_loc && g_y < h_loc)
-    {
-        for(int i=0; i<comp; i++)
-        {
-            char a,b,c,d;
-            a = mem(i, g_x, g_y);
-            if(g_x == (w_loc - 1))
-                b = 255;
-            else
-                b = mem(i, g_x + w, g_y);
-            if(g_y == (h_loc - 1))
-                c = 255;
-            else
-                c = mem(i, g_x, g_y + h);
-            if(g_y == (h_loc - 1) || g_x == (w_loc - 1))
-                d = 255;
-            else
-                d = mem(i, g_x + w, g_y + h);
 
-            if(b < a)
-                a = b;
-            if(d < c)
-                c = d;
-            if(c < a)
-                a = c;
-            mem_loc(i,l_x,l_y) = a;
-        }
+    for(int i=0; i<comp; i++)
+    {
+        mem_loc(i,l_x,l_y) = mem(i,g_x,g_y);
+        mem_loc(i,l_x + w_loc,l_y) = (g_x + (w / 2) < w)?mem(i,g_x + (w / 2),g_y):255;
+        mem_loc(i,l_x,l_y + h_loc) = (g_y + (h / 2) < h)?mem(i,g_x,g_y + (h / 2)):255;
+        mem_loc(i,l_x + w_loc,l_y + h_loc) = (g_x + (w / 2) < w)?
+                                             (g_y + (h / 2) < h)? mem(i,g_x + (w / 2),g_y + (h / 2)): 0
+                                             :255;
     }
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    for(int i=0; i<comp; i++)
+    {
+        char a = mem_loc(i, l_x, l_y);
+        char b = mem_loc(i, l_x + w_loc, g_y);
+        char c = mem_loc(i,l_x,l_y + h_loc);
+        char d = mem_loc(i,l_x + w_loc,l_y + h_loc);
+
+        if(b < a)
+            a = b;
+        if(d < c)
+            c = d;
+        if(c < a)
+            a = c;
+        mem(i,g_x,g_y) = a;
+    }
+
 }
 
 __kernel void compute_max_and_sum(
