@@ -1,3 +1,4 @@
+
 __kernel void count_one(
     __global int* array,
     __local int* scratch,
