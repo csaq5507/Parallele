@@ -15,7 +15,6 @@ __kernel void compute_min(
     int g_y = get_global_id(1);
     int l_x = get_local_id(0);
     int l_y = get_local_id(1);
-    int gid = get_group_id(0);
 
 
     for(int i=0; i<comp; i++)

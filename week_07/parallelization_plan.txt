@@ -1,0 +1,7 @@
+OpenMP:
+    init C: just simple distribution over N Threads [parallel for]
+    create historgam: just simple distribution over N Threads but with a atomic on C[i], so MAX_AGE Threads could run simultaneously [parallel for][atomic]
+    calc starting index: we need a ordered clause on the second two instructions, and a reduction on total, hard to parallelize
+    calc output: just simple distribution over N Threads [parallel for]
+
+]
