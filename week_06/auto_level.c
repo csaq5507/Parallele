@@ -286,7 +286,7 @@ double kernel_nanoseconds;
 double auto_level_ocl(char * in, char * out)
 {
     // load input file
-    if(DEBUG)
+ /*   if(DEBUG)
         printf("Loading input file %s ..\n", in);
     int width, height, components;
     unsigned char *data = stbi_load(in, &width, &height, &components, 0);
@@ -399,7 +399,7 @@ double auto_level_ocl(char * in, char * out)
                                 &time_end, NULL);
 
         kernel_nanoseconds+=(time_end - time_start);
-        if(temp_width < 128)
+        if(temp_width == 1)
             break;
     }
 
@@ -467,7 +467,7 @@ double auto_level_ocl(char * in, char * out)
                                 &time_end, NULL);
 
         kernel_nanoseconds+=(time_end - time_start);
-        if(temp_width < 128)
+        if(temp_width == 1)
             break;
     }
 
@@ -534,7 +534,7 @@ double auto_level_ocl(char * in, char * out)
                                 &time_end, NULL);
 
         kernel_nanoseconds+=(time_end - time_start);
-        if(temp_width < 128)
+        if(temp_width == 1)
             break;
     }
 
@@ -600,7 +600,8 @@ double auto_level_ocl(char * in, char * out)
 
     if(DEBUG)
         printf("Done!\n");
-    return time;
+    return time;*/
+    return 0;
 }
 
 int main(int argc, char** argv) {
@@ -619,7 +620,7 @@ int main(int argc, char** argv) {
     double ompTime = auto_level_omp(input_file_name,output_file_name);
     double oclTime = auto_level_ocl(input_file_name,output_file_name);
 
-    printf("%.1f \t %.1f \t %.1f \t %.1f \n",originalTime,seqTime,ompTime,oclTime);
+    printf("Original: %.1f \nSeq. optimization: %.1f \nOpeMP: %.1f \nOpenCL: %.1f \n",originalTime,seqTime,ompTime,oclTime);
 
     // done
     return EXIT_SUCCESS;
