@@ -4,4 +4,3 @@ OpenMP:
     calc starting index: we need a ordered clause on the second two instructions, and a reduction on total, hard to parallelize
     calc output: just simple distribution over N Threads [parallel for]
 
-]

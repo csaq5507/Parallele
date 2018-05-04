@@ -13,10 +13,11 @@ void generate_list(person_t * list, int entries)
     }
 }
 
+
 void print_list(person_t * list, int entries)
 {
     for (int i = 0; i < entries; ++i) {
-        printf("%s is %d years old\n",list[i].name,list[i].age);
+        printf("%d years: %s\n",list[i].age,list[i].name);
     }
 }
 
@@ -42,6 +43,7 @@ void sort(person_t * list, int entries)
     //calculate output
     for (int l = 0; l < entries; ++l) {
         memcpy(&(list[C[temp[l].age]]),&(temp[l]), sizeof(person_t));
+        C[temp[l].age]++;
     }
 }
 

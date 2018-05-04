@@ -18,7 +18,7 @@ void generate_list(person_t * list, int entries)
 void print_list(person_t * list, int entries)
 {
     for (int i = 0; i < entries; ++i) {
-        printf("%s is %d years old\n",list[i].name,list[i].age);
+        printf("%d years: %s\n",list[i].age,list[i].name);
     }
 }
 
