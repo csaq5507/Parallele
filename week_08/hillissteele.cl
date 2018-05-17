@@ -18,9 +18,9 @@ __kernel void hillissteele(
 
 
     int k;
-    int temp;
+    int* temp;
 
-    for(int j=0; j < 3; j++){
+    for(int j=0; j < num_iterations; j++){
         //2 ^ j
         k = (int)pow( (float) 2, (float) j);
 
@@ -33,7 +33,7 @@ __kernel void hillissteele(
 
         barrier(CLK_LOCAL_MEM_FENCE);
 
-        //Swap buffers TODO: use pointers!
+        //Swap buffers
         temp = b[g_id];
         b[g_id] = a[g_id];
         a[g_id] = temp;

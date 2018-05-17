@@ -92,10 +92,10 @@ int* hillissteele_ocl(int* input, int n){
 
     size_t size[1] = {n};
 
-	CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue,kernel,1,NULL,size,NULL,0,NULL,NULL),"Failed to enqueue kernel.");
+	CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue,kernel,1,NULL,size,size,0,NULL,NULL),"Failed to enqueue kernel.");
 
 	//Part 6: copy back results to host
-	err= clEnqueueReadBuffer(command_queue,devArrA,CL_TRUE,0,n*sizeof(value_t),input,0,NULL,NULL);
+	err= clEnqueueReadBuffer(command_queue,devArrA,CL_TRUE,0,n*sizeof(int),input,0,NULL,NULL);
 	CLU_ERRCHECK(err,"Failed reading back results");
 
 	//Part 7: cleanup
