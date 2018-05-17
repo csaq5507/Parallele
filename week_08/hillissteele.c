@@ -1,4 +1,3 @@
-
 /*
  * hillissteele.c
  * 
@@ -39,7 +38,7 @@ void printarray(int*input,int n){
 }
 
 int* hillissteele_seq(int * input, int n) {
-	int length= log(n)/log(2);
+	int length= ceil(log(n)/log(2));
 	int* res=malloc(sizeof(int)*n);
 	int* tmp=malloc(sizeof(int)*n);
 	
@@ -61,14 +60,7 @@ int* hillissteele_seq(int * input, int n) {
 }
 int* hillissteele_ocl(int* input, int n){
 	int length= log(n)/log(2);
-	int* res =malloc(sizeof(int)*n);
-	int* tmp =malloc(sizeof(int)*n);
-			for (int i=0;i<n;i++){
-		res[i]=0;
-	}
-	//printarray(res,n);
-	//compute
-	//solution with CL utils
+    printf("Num of iterations: %d \n", length);
 	
 	//Part1: ocl init
 	cl_context context;
@@ -77,45 +69,35 @@ int* hillissteele_ocl(int* input, int n){
 	
 	//Part 2: create memory buffers
 	cl_int err;
-	cl_mem devArrA= clCreateBuffer(context, CL_MEM_READ_WRITE , n*sizeof(value_t),NULL,&err);
+	cl_mem devArrA= clCreateBuffer(context, CL_MEM_READ_WRITE , n * sizeof(int),NULL,&err);
 	CLU_ERRCHECK(err,"Failed to create Buffer for array A");
-	cl_mem devArrB= clCreateBuffer(context, CL_MEM_READ_WRITE , n*sizeof(value_t),NULL,&err);
-	CLU_ERRCHECK(err,"Failed to create Buffer for array B");
-	
-	//Part 4: create kernel from source
-	cl_program program= cluBuildProgramFromFile(context, device_id, "hillissteele.cl",NULL);
-	cl_kernel kernel= clCreateKernel(program, "hillissteele", &err);
-	CLU_ERRCHECK(err,"Failed to create kernel from Program");
-	
-	for(int t=0;t<length;t++){
 		
 	
 	//Part 3: fill Memory Buffers
-	err= clEnqueueWriteBuffer(command_queue, devArrA, CL_TRUE, 0, n*sizeof(value_t), input,0,NULL,NULL);
+	err= clEnqueueWriteBuffer(command_queue, devArrA, CL_TRUE, 0, n * sizeof(int), input,0,NULL,NULL);
 	CLU_ERRCHECK(err,"Failed to write Array A to device");
-	err= clEnqueueWriteBuffer(command_queue, devArrB, CL_TRUE, 0, n*sizeof(value_t), res,0,NULL,NULL);
-	CLU_ERRCHECK(err,"Failed to write Array B to device");
+
+	//Part 4: create kernel from source
+	cl_program program= cluBuildProgramFromFile(context, device_id, "hillissteele.cl",NULL);
+
+	cl_kernel kernel= clCreateKernel(program, "hillissteele", &err);
+	CLU_ERRCHECK(err,"Failed to create kernel from Program");
 	
 	//Part 5: set arguments and execute Kernel
 	err= clSetKernelArg(kernel,0,sizeof(cl_mem),&devArrA);
-	err= clSetKernelArg(kernel,1,sizeof(cl_mem),&devArrB);
-	err= clSetKernelArg(kernel,2,sizeof(value_t),&n);
-	err= clSetKernelArg(kernel,3,sizeof(value_t),&t);
-	const size_t size=n;
-	CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue,kernel,1,NULL,&size,NULL,0,NULL,NULL),"Failed to enqueue kernel.");
-	
+	err= clSetKernelArg(kernel,1,sizeof(int) * n,NULL);
+	err= clSetKernelArg(kernel,2,sizeof(int) * n,NULL);
+	err= clSetKernelArg(kernel,3,sizeof(int),&length);
+    err= clSetKernelArg(kernel,4,sizeof(int),&n);
+
+    size_t size[1] = {n};
+
+	CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue,kernel,1,NULL,size,NULL,0,NULL,NULL),"Failed to enqueue kernel.");
+
 	//Part 6: copy back results to host
-	err= clEnqueueReadBuffer(command_queue,devArrB,CL_TRUE,0,n*sizeof(value_t),res,0,NULL,NULL);
-	CLU_ERRCHECK(err,"Failed reading back results");
 	err= clEnqueueReadBuffer(command_queue,devArrA,CL_TRUE,0,n*sizeof(value_t),input,0,NULL,NULL);
-	CLU_ERRCHECK(err,"Failed reading back results");	
-	
-	//swap arrays(just pointers)
-	tmp=input;
-	input=res;
-	res=tmp;
-	}
-	
+	CLU_ERRCHECK(err,"Failed reading back results");
+
 	//Part 7: cleanup
 	CLU_ERRCHECK(clFlush(command_queue), "Failed to flush command queue");
 	CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completition");
@@ -123,7 +105,6 @@ int* hillissteele_ocl(int* input, int n){
 	CLU_ERRCHECK(clReleaseProgram(program), "Failed to release Program");	
 	// free device memory
     CLU_ERRCHECK(clReleaseMemObject(devArrA), "Failed to release Matrix A");
-    CLU_ERRCHECK(clReleaseMemObject(devArrB), "Failed to release Matrix B");
 
     // free management resources
     CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");

@@ -14,7 +14,7 @@ SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -pedantic -std=c11")
 include_directories(${OpenCL_INCLUDE_DIRS})
 link_directories(${OpenCL_LIBRARY})
 
-add_executable(hillisteele hillissteele.c cl_utils.h utils.h)
+add_executable(hillisteele hillissteele.c)
 
 target_include_directories (hillisteele PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries (hillisteele ${OpenCL_LIBRARY} m)
