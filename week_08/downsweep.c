@@ -60,7 +60,6 @@ int* hillissteele_seq(int * input, int n) {
 }
 int* hillissteele_ocl(int* input, int n){
 	int length= log(n)/log(2);
-    printf("Num of iterations: %d \n", length);
 	
 	//Part1: ocl init
 	cl_context context;
@@ -114,7 +113,7 @@ int* hillissteele_ocl(int* input, int n){
 }
 int main(int argc, char **argv)
 {
-	int n=8;
+	int n=16;
 	int*input=malloc(sizeof(int)*n);
 	for (int i=0;i<n;i++){
 		input[i]=i+1;
