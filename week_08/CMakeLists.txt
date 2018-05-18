@@ -15,8 +15,11 @@ include_directories(${OpenCL_INCLUDE_DIRS})
 link_directories(${OpenCL_LIBRARY})
 
 add_executable(hillisteele hillissteele.c)
+add_executable(downsweep downsweep.c)
 
 target_include_directories (hillisteele PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries (hillisteele ${OpenCL_LIBRARY} m)
 
+target_include_directories (downsweep PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries (downsweep ${OpenCL_LIBRARY} m)
 
