@@ -63,4 +63,5 @@ void gen_name(name_t buffer) {
 	snprintf(buffer, NAME_LEN, "%s %s",
 		first_names[rand()%first_name_count], 
 		last_names[rand()%last_name_count]);
+
 }

@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
 
     // parse input parameters
     if(argc != 3) {
-        printf("Usage: ./countsort_bench [list_size] [rand_seed]\nExample: %s 100 5677\n",argv[0], argv[0]);
+        printf("Usage: ./countsort_bench [list_size] [rand_seed]\nExample: %s 100 5677\n",argv[0]);
         return EXIT_FAILURE;
     }
     int entries = atoi(argv[1]);
