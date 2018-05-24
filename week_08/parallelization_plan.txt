@@ -1,0 +1,10 @@
+OpenMP:
+    init C: just simple distribution over N Threads [parallel for]
+    create historgam: just simple distribution over N Threads but with a atomic on C[i], so MAX_AGE Threads could run simultaneously [parallel for][atomic]
+    calc starting index: we need a ordered clause on the second two instructions, and a reduction on total, hard to parallelize
+    calc output: just simple distribution over N Threads [parallel for]
+OpenCL:
+	The Histogramm could be created via reduction
+	The index-creation prozess is basically a sum --> reduction kicks in
+	The sort-age-to-person step (creating output) is difficult to parallelize. Only thing is split the list into n parts and sort it.
+
