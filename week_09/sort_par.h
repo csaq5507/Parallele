@@ -40,6 +40,7 @@ void create_histogram_ocl(person_t * list, int * out, int entries)
 {
     for (int i = 0; i < MAX_AGE; ++i)
         out[i]=0;
+
     cl_mem devArrA = clCreateBuffer(context, CL_MEM_READ_WRITE, entries * sizeof(person_t), NULL, &err);
     CLU_ERRCHECK(err, "Failed to create Buffer for array A");
 
@@ -60,13 +61,19 @@ void create_histogram_ocl(person_t * list, int * out, int entries)
     //Part 5: set arguments and execute Kernel
     err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &devArrA);
     err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &devArrB);
-    err = clSetKernelArg(kernel, 2, sizeof(int) * entries, NULL);
-    err = clSetKernelArg(kernel, 3, sizeof(int) * MAX_AGE, NULL);
+    err = clSetKernelArg(kernel, 2, sizeof(int) * MAX_AGE, NULL);
+    err = clSetKernelArg(kernel, 3, sizeof(int), NULL);
     err = clSetKernelArg(kernel, 4, sizeof(int), &entries);
     err = clSetKernelArg(kernel, 5, sizeof(int), &a);
 
-    size_t global_size[1] = {entries};
-    size_t local_size[1] = {MAX_AGE};
+    //get kernel work group size
+    size_t max_work_group_size = 0;
+    size_t calc_global_size = 0;
+    clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &max_work_group_size, NULL);
+    calc_global_size = (size_t) ((entries/max_work_group_size) + 1) * max_work_group_size;
+
+    size_t global_size[1] = {calc_global_size};
+    size_t local_size[1] = {max_work_group_size};
 
     CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, global_size, local_size, 0, NULL, NULL),
                  "Failed to enqueue kernel.");
