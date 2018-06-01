@@ -6,8 +6,6 @@
 #include "utils.h"
 #include "cl_utils.h"
 
-typedef float value_t;
-
 
 // -- matrix utilities --
 
@@ -23,7 +21,7 @@ typedef struct _cl_mm_environment {
     cl_context context;
     cl_command_queue queue;
     cl_program program;
-    cl_kernel kernel;    
+    cl_kernel kernel;
 } cl_mm_environment;
 
 cl_mm_environment createMMEnvironment();
@@ -40,18 +38,22 @@ int roundUpToMultiple(int N, int B) {
 int SIZES[] = { 500, 734, 1024, 1493, 2345, 4001 };
 int NUM_SIZES = 6;
 int NUM_REPETITION = 3;
+const long GLOBAL_MEM_SIZE = 2049728;
+const long LOCAL_MEM_SIZE = 49152;
+const long GLOBAL_CACHE = 32768;
+const long CACHE_LINE = 128;
+const long WORK_GROUP_SIZE = 1024;
 
 // ----------------------
 
-
 int main(int argc, char** argv) {
+
 
 
     // ---------- setup ----------
 
     cl_mm_environment env = createMMEnvironment();
 
-    
     // ------ benchmarking -------
 
     srand(0);
@@ -65,17 +67,19 @@ int main(int argc, char** argv) {
     for(int i=0; i<NUM_SIZES; i++) {
 
         // --- setup benchmark ---
-        
+
         int N = SIZES[i];
         mflops[i] = 0;
-        
+
         printf("\nSetting up N=%d ..\n", N);
-        
+
         // create input
         restrict Matrix A = createMatrix(N,N);
         restrict Matrix B = createMatrix(N,N);
         restrict Matrix C = createMatrix(N,N);
         restrict Matrix R = createMatrix(N,N);
+
+        printf("%ld\n", sizeof(value_t) * N * N);
 
         // fill matrix
         for(int i = 0; i<N; i++) {
@@ -87,7 +91,7 @@ int main(int argc, char** argv) {
 
         // compute reference results
         double cpu_start = now();
-        #pragma omp parallel for
+#pragma omp parallel for
         for(int i = 0; i<N; i++) {
             // a slightly optimized CPU version of MM
             for(int j = 0; j<N; j++) {
@@ -108,7 +112,7 @@ int main(int argc, char** argv) {
 
             // clear result
             memset(C,0,sizeof(value_t) * N * N);
-    
+
             // create buffer on device
             cl_int err;
             cl_mem devMatA = clCreateBuffer(env.context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, N * N * sizeof(value_t), NULL, &err);
@@ -131,21 +135,23 @@ int main(int argc, char** argv) {
 
             // set arguments and execute kernel
             size_t S = roundUpToMultiple(N,32);
+            const int LOC_SIZE = 32;
             size_t size[2] = {S, S};
-            cluSetKernelArguments(env.kernel, 4,
-                sizeof(cl_mem), (void *)&devMatC,
-                sizeof(cl_mem), (void *)&devMatA,
-                sizeof(cl_mem), (void *)&devMatB,
-                sizeof(int), &N
-            );
+            size_t loc_size[2] = {LOC_SIZE,LOC_SIZE};
+            cluSetKernelArguments(env.kernel, 5,
+                                  sizeof(cl_mem), (void *)&devMatC,
+                                  sizeof(cl_mem), (void *)&devMatA,
+                                  sizeof(cl_mem), (void *)&devMatB,
+                                  sizeof(int), &N,
+                                  sizeof(int), &S);
 
             // submit kernel
             cl_event event;
-            CLU_ERRCHECK(clEnqueueNDRangeKernel(env.queue, env.kernel, 2, NULL, size, NULL, 0, NULL, &event), "Failed to enqueue 2D kernel");
+            CLU_ERRCHECK(clEnqueueNDRangeKernel(env.queue, env.kernel, 2, NULL, size, loc_size, 0, NULL, &event), "Failed to enqueue 2D kernel");
 
             // wait for kernel
             clWaitForEvents(1,&event);
-            
+
             // test whether kernel finished successfully
             cl_int status;
             clGetEventInfo(event, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(cl_int), &status, NULL);
@@ -153,13 +159,13 @@ int main(int argc, char** argv) {
                 CLU_ERRCHECK(-status, "Kernel failed to execute succesfully.");
                 exit(1);
             }
-            
+
             // get execution time
             cl_ulong start, end, duration;
             clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, NULL);
             clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, NULL);
             duration = end - start;
-   
+
             // release event
             CLU_ERRCHECK(clReleaseEvent(event), "Failed to release event");
 
@@ -172,20 +178,20 @@ int main(int argc, char** argv) {
             for(int i = 0; i<N; i++) {
                 for(int j = 0; j<N; j++) {
                     // if result is close enough, we are fine
-                    if (fabsf(C[i*N+j]-R[i*N+j]) < 1e-10) continue;
-                    //printf("Wrong result for (%d,%d): %f vs. %f\n", i,j,C[i*N+j],R[i*N+j]);
+                    if (fabsf(C[i*N+j]-R[i*N+j]) < 1e-1) continue;
+                    printf("Wrong result for (%d,%d): %f vs. %f\n", i,j,C[i*N+j],R[i*N+j]);
                     success = false;
                 }
             }
-            
-            
+
+
             double seconds = duration / 1e9;
             double curMflops = (2.0*N*N*N) / seconds / 1e9;
             printf("\tDuration: %2.3fs, GFLOPS: %5.3f, Verification: %s\n", seconds, curMflops, (success)?"OK":"FAILED");
-            
+
             // keep track of overall success
             if (!success) allValid = false;
-            
+
             // record best performance
             if (mflops[i] < curMflops) mflops[i] = curMflops;
 
@@ -195,7 +201,7 @@ int main(int argc, char** argv) {
             CLU_ERRCHECK(clReleaseMemObject(devMatC), "Failed to release Matrix C");
 
         }
-        
+
         printf("\t\t\t\tPerformance result for N=%d: %5.3f\n", N, mflops[i]);
 
         // --- cleanup ---
@@ -210,30 +216,30 @@ int main(int argc, char** argv) {
     }
 
     // cleanup
-    
+
     destroyMMEnvironment(env);
 
     // finally: report overall result
     printf("\n");
     printf("-------------------------------------------------\n");
-        
+
     if (!allValid) {
-        
+
         printf("Invalid results encountered, failed!\n");
-        
+
     } else {
-     
-        // overall score: geometric mean of individual best   
+
+        // overall score: geometric mean of individual best
         double prod = 1;
         for(int i=0; i<NUM_SIZES; i++) {
             prod *= mflops[i];
         }
         double score = pow(prod,1.0/NUM_SIZES);
         printf("Overall result: %5.3f GFLOPS\n", score);
-        
+
     }
     printf("-------------------------------------------------\n");
-    
+
     // done
     return EXIT_SUCCESS;
 }
@@ -251,13 +257,13 @@ void releaseMatrix(Matrix m) {
 cl_mm_environment createMMEnvironment() {
 
     cl_mm_environment res;
-    
+
     // ocl initialization
     cl_device_id device_id = cluInitDeviceWithProperties(0, &res.context, &res.queue, CL_QUEUE_PROFILING_ENABLE);
 
     // create kernel from source
     cl_int err;
-    res.program = cluBuildProgramFromFile(res.context, device_id, "mat_mul.cl", NULL);
+    res.program = cluBuildProgramFromFile(res.context, device_id, "mat_mul_d_a_c.cl", NULL);
     res.kernel = clCreateKernel(res.program, "mat_mul", &err);
     CLU_ERRCHECK(err, "Failed to create mat_mul kernel from program");
 
@@ -277,5 +283,3 @@ void destroyMMEnvironment(cl_mm_environment env) {
     CLU_ERRCHECK(clReleaseCommandQueue(env.queue), "Failed to release command queue");
     CLU_ERRCHECK(clReleaseContext(env.context),    "Failed to release OpenCL context");
 }
-
-
