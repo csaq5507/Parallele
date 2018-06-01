@@ -21,7 +21,7 @@
 
 #include "err_code.h"
 
-int main(void)
+void cl_info(void)
 {
     cl_int err;
     // Find the number of OpenCL platforms
@@ -143,5 +143,5 @@ int main(void)
         printf("\n-------------------------\n");
     }
 
-    return EXIT_SUCCESS;
+    
 }

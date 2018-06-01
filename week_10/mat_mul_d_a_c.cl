@@ -1,6 +1,6 @@
 #define BLOCK_SIZE 32
 
-__kernel void matrix_multiplication_divide_and_conquer(__global float* C, __global float* A, __global float* B, unsigned int wA, unsigned int wB) {
+__kernel void matrix_multiplication_divide_and_conquer(__global float* C, __global float* A, __global float* B, unsigned int N) {
 
     // Block index
     int bx = get_group_id(0);
@@ -17,11 +17,11 @@ __kernel void matrix_multiplication_divide_and_conquer(__global float* C, __glob
 
     // Index of the first sub-matrix of A processed
     // by the block
-    int aBegin = wA * BLOCK_SIZE * by;
+    int aBegin = N * BLOCK_SIZE * by;
 
     // Index of the last sub-matrix of A processed
     // by the block
-    int aEnd   = aBegin + wA - 1;
+    int aEnd   = aBegin + N - 1;
 
     // Step size used to iterate through the
     // sub-matrices of A
@@ -33,7 +33,7 @@ __kernel void matrix_multiplication_divide_and_conquer(__global float* C, __glob
 
     // Step size used to iterate through the
     // sub-matrices of B
-    int bStep  = BLOCK_SIZE * wB;
+    int bStep  = BLOCK_SIZE * N;
 
     float Csub = 0;
 
@@ -53,9 +53,15 @@ __kernel void matrix_multiplication_divide_and_conquer(__global float* C, __glob
         // to local memory; each thread loads
         // one element of each matrix
 
-        As[ty][tx] = A[a + wA * ty + tx];
-        Bs[ty][tx] = B[b + wB * ty + tx];
-
+        if(gx < N && gy < N)
+        {
+            As[ty][tx] = A[a + N * ty + tx];
+            Bs[ty][tx] = B[b + N * ty + tx];
+        } else
+        {
+            As[ty][tx] = 0;
+            Bs[ty][tx] = 0;
+        }
         // Synchronize to make sure the matrices
         // are loaded
         barrier(CLK_LOCAL_MEM_FENCE);
@@ -76,6 +82,7 @@ __kernel void matrix_multiplication_divide_and_conquer(__global float* C, __glob
 
     // Write the block sub-matrix to device memory;
     // each thread writes one element
-    int c = wB * BLOCK_SIZE * by + BLOCK_SIZE * bx;
-    C[c + wB * ty + tx] = Csub;
+    int c = N * BLOCK_SIZE * by + BLOCK_SIZE * bx;
+    if(gx < N && gy < N)
+    C[c + N * ty + tx] = Csub;
 }

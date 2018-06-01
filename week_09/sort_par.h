@@ -19,6 +19,7 @@ cl_kernel kernel;
 
 size_t global_size[1];
 size_t local_size[1];
+cl_mem histogram;
 
 void pre()
 {
@@ -36,22 +37,21 @@ void post()
 
 }
 
-void create_histogram_ocl(person_t * list, int * out, int entries)
+void create_histogram_ocl(person_t * list, int entries)
 {
-    for (int i = 0; i < MAX_AGE; ++i)
-        out[i]=0;
+    int out[MAX_AGE] ={0};
 
     cl_mem devArrA = clCreateBuffer(context, CL_MEM_READ_WRITE, entries * sizeof(person_t), NULL, &err);
     CLU_ERRCHECK(err, "Failed to create Buffer for array A");
 
-    cl_mem devArrB = clCreateBuffer(context, CL_MEM_READ_WRITE, MAX_AGE * sizeof(int), NULL, &err);
+    histogram = clCreateBuffer(context, CL_MEM_READ_WRITE, MAX_AGE * sizeof(int), NULL, &err);
     CLU_ERRCHECK(err, "Failed to create Buffer for array B");
 
     //Part 3: fill Memory Buffers
     err = clEnqueueWriteBuffer(command_queue, devArrA, CL_TRUE, 0, entries * sizeof(person_t), list, 0, NULL, NULL);
     CLU_ERRCHECK(err, "Failed to write Array A to device");
 
-    err = clEnqueueWriteBuffer(command_queue, devArrB, CL_TRUE, 0, MAX_AGE * sizeof(int), out, 0, NULL, NULL);
+    err = clEnqueueWriteBuffer(command_queue, histogram, CL_TRUE, 0, MAX_AGE * sizeof(int), out, 0, NULL, NULL);
     CLU_ERRCHECK(err, "Failed to write Array B to device");
 
     //Part 4: create kernel from source
@@ -60,7 +60,7 @@ void create_histogram_ocl(person_t * list, int * out, int entries)
 
     //Part 5: set arguments and execute Kernel
     err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &devArrA);
-    err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &devArrB);
+    err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &histogram);
     err = clSetKernelArg(kernel, 2, sizeof(int) * MAX_AGE, NULL);
     err = clSetKernelArg(kernel, 3, sizeof(int), NULL);
     err = clSetKernelArg(kernel, 4, sizeof(int), &entries);
@@ -78,28 +78,17 @@ void create_histogram_ocl(person_t * list, int * out, int entries)
     CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, global_size, local_size, 0, NULL, NULL),
                  "Failed to enqueue kernel.");
 
-    //Part 6: copy back results to host
-    err = clEnqueueReadBuffer(command_queue, devArrB, CL_TRUE, 0, MAX_AGE * sizeof(int), out, 0, NULL, NULL);
-    CLU_ERRCHECK(err, "Failed reading back results");
-
     //Part 7: cleanup
     CLU_ERRCHECK(clFlush(command_queue), "Failed to flush command queue");
     CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completition");
     CLU_ERRCHECK(clReleaseKernel(kernel), "Failed to release kernel");
     CLU_ERRCHECK(clReleaseMemObject(devArrA), "Failed to release Matrix A");
-    CLU_ERRCHECK(clReleaseMemObject(devArrB), "Failed to release Matrix A");
 
 }
 
 
-void calc_index_ocl(int * in_out)
+void calc_index_ocl(int * out)
 {
-    cl_mem devArrC = clCreateBuffer(context, CL_MEM_READ_WRITE, MAX_AGE * sizeof(int), NULL, &err);
-    CLU_ERRCHECK(err, "Failed to create Buffer for array C");
-
-    //Part 3: fill Memory Buffers
-    err = clEnqueueWriteBuffer(command_queue, devArrC, CL_TRUE, 0, MAX_AGE * sizeof(int), in_out, 0, NULL, NULL);
-    CLU_ERRCHECK(err, "Failed to write Array C to device");
 
 
     cl_kernel kernel = clCreateKernel(program, "calc_index", &err);
@@ -107,7 +96,7 @@ void calc_index_ocl(int * in_out)
     int length = log(MAX_AGE) / log(2);
 
     //Part 5: set arguments and execute Kernel
-    err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &devArrC);
+    err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &histogram);
     err = clSetKernelArg(kernel, 1, sizeof(int) * MAX_AGE, NULL);
     err = clSetKernelArg(kernel, 2, sizeof(int) * MAX_AGE, NULL);
     err = clSetKernelArg(kernel, 3, sizeof(int), &length);
@@ -120,13 +109,13 @@ void calc_index_ocl(int * in_out)
                  "Failed to enqueue kernel.");
 
     //Part 6: copy back results to host
-    err = clEnqueueReadBuffer(command_queue, devArrC, CL_TRUE, 0, MAX_AGE * sizeof(int), in_out, 0, NULL, NULL);
+    err = clEnqueueReadBuffer(command_queue, histogram, CL_TRUE, 0, MAX_AGE * sizeof(int), out, 0, NULL, NULL);
     CLU_ERRCHECK(err, "Failed reading back results");
 
     CLU_ERRCHECK(clFlush(command_queue), "Failed to flush command queue");
     CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completition");
     CLU_ERRCHECK(clReleaseKernel(kernel), "Failed to release kernel");
-    CLU_ERRCHECK(clReleaseMemObject(devArrC), "Failed to release Matrix A");
+    CLU_ERRCHECK(clReleaseMemObject(histogram), "Failed to release Matrix A");
 }
 
 #endif //PARALLELE_SORT_PAR_H

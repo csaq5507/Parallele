@@ -56,7 +56,7 @@ void sort_ocl(person_t * list, int entries)
 {
     int * C = malloc(sizeof(int) * MAX_AGE);
     pre();
-    create_histogram_ocl(list,C,entries);
+    create_histogram_ocl(list,entries);
     calc_index_ocl(C);
     calc_output(list,C,entries);
     free(C);

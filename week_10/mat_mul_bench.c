@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "cl_utils.h"
 
+typedef float value_t;
 
 // -- matrix utilities --
 
@@ -35,7 +36,7 @@ int roundUpToMultiple(int N, int B) {
 
 // ----------------------
 
-int SIZES[] = { 500, 734, 1024, 1493, 2345, 4001 };
+int SIZES[] = { 128, 256, 512, 1024, 2048, 4096 };
 int NUM_SIZES = 6;
 int NUM_REPETITION = 3;
 const long GLOBAL_MEM_SIZE = 2049728;
@@ -78,8 +79,6 @@ int main(int argc, char** argv) {
         restrict Matrix B = createMatrix(N,N);
         restrict Matrix C = createMatrix(N,N);
         restrict Matrix R = createMatrix(N,N);
-
-        printf("%ld\n", sizeof(value_t) * N * N);
 
         // fill matrix
         for(int i = 0; i<N; i++) {
@@ -138,12 +137,11 @@ int main(int argc, char** argv) {
             const int LOC_SIZE = 32;
             size_t size[2] = {S, S};
             size_t loc_size[2] = {LOC_SIZE,LOC_SIZE};
-            cluSetKernelArguments(env.kernel, 5,
+            cluSetKernelArguments(env.kernel, 4,
                                   sizeof(cl_mem), (void *)&devMatC,
                                   sizeof(cl_mem), (void *)&devMatA,
                                   sizeof(cl_mem), (void *)&devMatB,
-                                  sizeof(int), &N,
-                                  sizeof(int), &S);
+                                  sizeof(int), &N);
 
             // submit kernel
             cl_event event;
@@ -178,7 +176,7 @@ int main(int argc, char** argv) {
             for(int i = 0; i<N; i++) {
                 for(int j = 0; j<N; j++) {
                     // if result is close enough, we are fine
-                    if (fabsf(C[i*N+j]-R[i*N+j]) < 1e-1) continue;
+                    if (fabsf(C[i*N+j]-R[i*N+j]) < 1e-3) continue;
                     printf("Wrong result for (%d,%d): %f vs. %f\n", i,j,C[i*N+j],R[i*N+j]);
                     success = false;
                 }
@@ -264,7 +262,7 @@ cl_mm_environment createMMEnvironment() {
     // create kernel from source
     cl_int err;
     res.program = cluBuildProgramFromFile(res.context, device_id, "mat_mul_d_a_c.cl", NULL);
-    res.kernel = clCreateKernel(res.program, "mat_mul", &err);
+    res.kernel = clCreateKernel(res.program, "matrix_multiplication_divide_and_conquer", &err);
     CLU_ERRCHECK(err, "Failed to create mat_mul kernel from program");
 
     // done

@@ -25,9 +25,6 @@ add_executable(mat_mul_bench mat_mul_bench.c)
 target_include_directories (mat_mul_bench PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries (mat_mul_bench ${OpenCL_LIBRARY} ${OpenMP_LIBRARY}  m)
 
-add_executable(info cl_info.c)
-target_link_libraries(info ${OpenCL_LIBRARY} ${OpenMP_LIBRARY}  m)
-
 # Scan through resource folder for updated files and copy if none existing or
 file (GLOB_RECURSE resources "*.cl")
 foreach(resource ${resources})
