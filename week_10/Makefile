@@ -5,7 +5,7 @@ CC_FLAGS=-O3 -march=native -std=c11 -I$(OCL_HOME)/include -L$(OCL_HOME)/lib -Wer
 
 COMMON_DEPENDENCIES=Makefile utils.h
 
-all: mat_mul_bench
+all: mat_mul_bench info
 
 mat_mul_bench: $(COMMON_DEPENDENCIES) mat_mul_bench.c cl_utils.h
 	@$(CC) $(CC_FLAGS) mat_mul_bench.c -o mat_mul_bench -lOpenCL -lm -fopenmp
