@@ -10,7 +10,7 @@ all: mat_mul_bench info
 mat_mul_bench: $(COMMON_DEPENDENCIES) mat_mul_bench.c cl_utils.h
 	@$(CC) $(CC_FLAGS) mat_mul_bench.c -o mat_mul_bench -lOpenCL -lm -fopenmp
 
-info: $(COMMON_DEPENDENCIES) cl_info.c cl_utils.h cl_err_code.h
+info: $(COMMON_DEPENDENCIES) cl_info.c cl_utils.h err_code.h
 	@$(CC) $(CC_FLAGS) cl_info.c -o info -lOpenCL -lm -fopenmp
 
 .PHONEY: clean
