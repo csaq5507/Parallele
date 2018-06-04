@@ -1,0 +1,2 @@
+- We've implemented the Divide and Conquer Algorithm found on https://en.wikipedia.org/wiki/Matrix_multiplication_algorithm#Divide_and_conquer_algorithm
+-

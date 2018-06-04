@@ -8,6 +8,8 @@
 
 typedef float value_t;
 
+#define BLOCK_SIZE 32
+
 // -- matrix utilities --
 
 typedef value_t* Matrix;
@@ -138,20 +140,16 @@ int main(int argc, char** argv) {
             size_t S ;
 
             k = &(env.kernel_d_a_c);
-            S = roundUpToMultiple(N, 32);
+            S = roundUpToMultiple(N, BLOCK_SIZE);
 
-            if(i!=2)   S+=32;
-            if(i==5) S+=32;
 
-            // set arguments and execute kernel
-
-            const int LOC_SIZE = 32;
+            const int LOC_SIZE = BLOCK_SIZE;
             size_t size[2] = {S, S};
             size_t loc_size[2] = {LOC_SIZE,LOC_SIZE};
 
-            clSetKernelArg(*k, 0, sizeof(cl_mem), (void *)&devMatC);
-            clSetKernelArg(*k, 1, sizeof(cl_mem), (void *)&devMatA);
-            clSetKernelArg(*k, 2, sizeof(cl_mem), (void *)&devMatB);
+            clSetKernelArg(*k, 0, sizeof(cl_mem), (void *)&devMatA);
+            clSetKernelArg(*k, 1, sizeof(cl_mem), (void *)&devMatB);
+            clSetKernelArg(*k, 2, sizeof(cl_mem), (void *)&devMatC);
             clSetKernelArg(*k, 3, sizeof(int),&N);
             clSetKernelArg(*k, 4, sizeof(int),&S);
 
