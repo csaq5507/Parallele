@@ -27,63 +27,49 @@ __kernel void matrix_multiplication_divide_and_conquer(
         __global float* A,
         __global float* B,
         __global float* C,
-        unsigned int N,
-        unsigned int S)
+        unsigned int N)
 {
-    // Block index
-    int bx = get_group_id(0);
-    int by = get_group_id(1);
 
-    // Thread index
-    int tx = get_local_id(0);
-    int ty = get_local_id(1);
+    __local float A_loc[BLOCK_SIZE*BLOCK_SIZE];
+    __local float B_loc[BLOCK_SIZE*BLOCK_SIZE];
 
-    // Global index
-    int gx = get_global_id(0);
-    int gy = get_global_id(1);
+    // obtain position of this 'thread'
+    size_t x = get_global_id(0);
+    size_t y = get_global_id(1);
 
-    int aBegin = N * BLOCK_SIZE * by;
+    // obtain position of this 'thread' local
+    size_t x_loc = get_local_id(0);
+    size_t y_loc = get_local_id(1);
 
-    int aEnd = aBegin + S - 1;
+    // obtain group index of this 'thread'
+    size_t x_group = get_group_id(0);
+    size_t y_group = get_group_id(1);
 
-    int aStep  = BLOCK_SIZE;
+    size_t loc_idx = y_loc * BLOCK_SIZE + x_loc;
 
-    int bBegin = BLOCK_SIZE * bx;
+    float result = 0;
 
-    int bStep  = BLOCK_SIZE * N;
+    for (int i=0; i < N; i += BLOCK_SIZE) {
 
-    int y_idx = 0;
-
-    float Csub = 0;
-
-    for (int a = aBegin, b = bBegin; a <= aEnd; y_idx += BLOCK_SIZE, a += aStep, b += bStep) {
-
-        __local float As[BLOCK_SIZE][BLOCK_SIZE];
-        __local float Bs[BLOCK_SIZE][BLOCK_SIZE];
-
-        if((a - aBegin) > N || (y_idx > N))
-            break;
-
-        if((a - aBegin) + tx > N)
-            As[ty][tx] = 0;
+        if((i + x_loc) >= N)
+            A_loc[loc_idx] = 0;
         else
-            As[ty][tx] = A[a + N * ty + tx];
+            A_loc[loc_idx] = A[(N * BLOCK_SIZE * y_group) + i + (y_loc * N) + x_loc];
 
-        if(y_idx + ty > N)
-            Bs[ty][tx] = 0;
+        if((i + y_loc) >= N)
+            B_loc[loc_idx] = 0;
         else
-            Bs[ty][tx] = B[b + N * ty + tx];
+            B_loc[loc_idx] = B[(BLOCK_SIZE * x_group) + (i * N) + (y_loc * N) + x_loc];
 
         barrier(CLK_LOCAL_MEM_FENCE);
 
-        for (int k = 0; k < BLOCK_SIZE; ++k) {
-            Csub += As[ty][k] * Bs[k][tx];
+        for (int j = 0; j < BLOCK_SIZE; ++j) {
+            result += A_loc[y_loc*BLOCK_SIZE + j] * B_loc[j * BLOCK_SIZE + x_loc];
         }
         barrier(CLK_LOCAL_MEM_FENCE);
 
     }
 
-    int c = N * BLOCK_SIZE * by + BLOCK_SIZE * bx;
-    if(gx < N && gy < N)
-        C[c + N * ty + tx] = Csub;
+    if(x < N && y < N)
+        C[y * N + x] = result;
 }

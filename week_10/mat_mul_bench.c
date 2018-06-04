@@ -37,13 +37,6 @@ int roundUpToMultiple(int N, int B) {
     N = N + (B - (N%B));
     return N;
 }
-int roundUpToMultiplePowerTwo(int N, int B) {
-    if ((N % B) == 0) return N;
-    N = N + (B - (N%B));
-    while(floor(log(N)/log(2)) != log(N)/log(2))
-        N+=B;
-    return N;
-}
 
 // ----------------------
 
@@ -151,7 +144,6 @@ int main(int argc, char** argv) {
             clSetKernelArg(*k, 1, sizeof(cl_mem), (void *)&devMatB);
             clSetKernelArg(*k, 2, sizeof(cl_mem), (void *)&devMatC);
             clSetKernelArg(*k, 3, sizeof(int),&N);
-            clSetKernelArg(*k, 4, sizeof(int),&S);
 
             // submit kernel
             cl_event event;
