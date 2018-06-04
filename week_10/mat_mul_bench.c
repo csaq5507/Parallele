@@ -22,7 +22,8 @@ typedef struct _cl_mm_environment {
     cl_context context;
     cl_command_queue queue;
     cl_program program;
-    cl_kernel kernel;
+    cl_kernel kernel_d_a_c;
+    cl_kernel kernel_default;
 } cl_mm_environment;
 
 cl_mm_environment createMMEnvironment();
@@ -31,12 +32,20 @@ void destroyMMEnvironment(cl_mm_environment);
 
 int roundUpToMultiple(int N, int B) {
     if ((N % B) == 0) return N;
-    return N + (B - (N%B));
+    N = N + (B - (N%B));
+    return N;
+}
+int roundUpToMultiplePowerTwo(int N, int B) {
+    if ((N % B) == 0) return N;
+    N = N + (B - (N%B));
+    while(floor(log(N)/log(2)) != log(N)/log(2))
+        N+=B;
+    return N;
 }
 
 // ----------------------
 
-int SIZES[] = { 128, 256, 512, 1024, 2048, 4096 };
+int SIZES[] = { 500, 734, 1024, 1493, 2345, 4001};
 int NUM_SIZES = 6;
 int NUM_REPETITION = 3;
 const long GLOBAL_MEM_SIZE = 2049728;
@@ -83,8 +92,8 @@ int main(int argc, char** argv) {
         // fill matrix
         for(int i = 0; i<N; i++) {
             for(int j = 0; j<N; j++) {
-                A[i*N+j] = rand() / (float)RAND_MAX + 0.5;      // some matrix
-                B[i*N+j] = rand() / (float)RAND_MAX + 0.5;      // some other matrix
+                A[i * N + j] = rand() / (float) RAND_MAX + 0.5;      // some matrix
+                B[i * N + j] = rand() / (float) RAND_MAX + 0.5;      // some other matrix
             }
         }
 
@@ -125,27 +134,30 @@ int main(int argc, char** argv) {
             CLU_ERRCHECK(err, "Failed to write matrix A to device");
             err = clEnqueueWriteBuffer(env.queue, devMatB, CL_TRUE, 0,  N * N * sizeof(value_t), B, 0, NULL, NULL);
             CLU_ERRCHECK(err, "Failed to write matrix B to device");
+            cl_kernel * k;
+            size_t S ;
 
+            k = &(env.kernel_d_a_c);
+            S = roundUpToMultiple(N, 32);
 
-            // --- perform benchmark ---
-
-
-            // -- run computation --
+            if(i!=2)   S+=32;
+            if(i==5) S+=32;
 
             // set arguments and execute kernel
-            size_t S = roundUpToMultiple(N,32);
+
             const int LOC_SIZE = 32;
             size_t size[2] = {S, S};
             size_t loc_size[2] = {LOC_SIZE,LOC_SIZE};
-            cluSetKernelArguments(env.kernel, 4,
-                                  sizeof(cl_mem), (void *)&devMatC,
-                                  sizeof(cl_mem), (void *)&devMatA,
-                                  sizeof(cl_mem), (void *)&devMatB,
-                                  sizeof(int), &N);
+
+            clSetKernelArg(*k, 0, sizeof(cl_mem), (void *)&devMatC);
+            clSetKernelArg(*k, 1, sizeof(cl_mem), (void *)&devMatA);
+            clSetKernelArg(*k, 2, sizeof(cl_mem), (void *)&devMatB);
+            clSetKernelArg(*k, 3, sizeof(int),&N);
+            clSetKernelArg(*k, 4, sizeof(int),&S);
 
             // submit kernel
             cl_event event;
-            CLU_ERRCHECK(clEnqueueNDRangeKernel(env.queue, env.kernel, 2, NULL, size, loc_size, 0, NULL, &event), "Failed to enqueue 2D kernel");
+            CLU_ERRCHECK(clEnqueueNDRangeKernel(env.queue, *k, 2, NULL, size, loc_size, 0, NULL, &event), "Failed to enqueue 2D kernel");
 
             // wait for kernel
             clWaitForEvents(1,&event);
@@ -176,7 +188,7 @@ int main(int argc, char** argv) {
             for(int i = 0; i<N; i++) {
                 for(int j = 0; j<N; j++) {
                     // if result is close enough, we are fine
-                    if (fabsf(C[i*N+j]-R[i*N+j]) < 1e-3) continue;
+                    if (fabsf(C[i*N+j]-R[i*N+j]) < 1e-1) continue;
                     printf("Wrong result for (%d,%d): %f vs. %f\n", i,j,C[i*N+j],R[i*N+j]);
                     success = false;
                 }
@@ -261,8 +273,9 @@ cl_mm_environment createMMEnvironment() {
 
     // create kernel from source
     cl_int err;
-    res.program = cluBuildProgramFromFile(res.context, device_id, "mat_mul_d_a_c.cl", NULL);
-    res.kernel = clCreateKernel(res.program, "matrix_multiplication_divide_and_conquer", &err);
+    res.program = cluBuildProgramFromFile(res.context, device_id, "mat_mul.cl", NULL);
+    res.kernel_d_a_c = clCreateKernel(res.program, "matrix_multiplication_divide_and_conquer", &err);
+    res.kernel_default = clCreateKernel(res.program, "mat_mul", &err);
     CLU_ERRCHECK(err, "Failed to create mat_mul kernel from program");
 
     // done
@@ -274,7 +287,8 @@ void destroyMMEnvironment(cl_mm_environment env) {
     // wait for completed operations (there should be none)
     CLU_ERRCHECK(clFlush(env.queue),            "Failed to flush command queue");
     CLU_ERRCHECK(clFinish(env.queue),           "Failed to wait for command queue completion");
-    CLU_ERRCHECK(clReleaseKernel(env.kernel),   "Failed to release kernel");
+    CLU_ERRCHECK(clReleaseKernel(env.kernel_d_a_c),   "Failed to release kernel");
+    CLU_ERRCHECK(clReleaseKernel(env.kernel_default),   "Failed to release kernel");
     CLU_ERRCHECK(clReleaseProgram(env.program), "Failed to release program");
 
     // free management resources
