@@ -203,7 +203,7 @@ int main(int argc, char** argv) {
                 for(int j = 0; j<N; j++) {
                     // if result is close enough, we are fine
                     if (fabsf(C[i*N+j]-R[i*N+j]) < 1e-1) continue;
-                    printf("Wrong result for (%d,%d): %f vs. %f\n", i,j,C[i*N+j],R[i*N+j]);
+              //      printf("Wrong result for (%d,%d): %f vs. %f\n", i,j,C[i*N+j],R[i*N+j]);
                     success = false;
                 }
             }
