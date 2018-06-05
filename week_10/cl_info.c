@@ -21,7 +21,7 @@
 
 #include "err_code.h"
 
-void cl_info(void)
+int main()
 {
     cl_int err;
     // Find the number of OpenCL platforms
@@ -96,16 +96,16 @@ void cl_info(void)
             cl_ulong mem_size;
             err = clGetDeviceInfo(device[j], CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong), &mem_size, NULL);
             checkError(err, "Getting device local memory size");
-            printf("\t\tLocal Memory Size: %llu B\n", mem_size);
+            printf("\t\tLocal Memory Size: %lu B\n", mem_size);
 
             // Get global memory size
             err = clGetDeviceInfo(device[j], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &mem_size, NULL);
             checkError(err, "Getting device global memory size");
-            printf("\t\tGlobal Memory Size: %llu KB\n", mem_size/(1024));
+            printf("\t\tGlobal Memory Size: %lu KB\n", mem_size/(1024));
             // Get global memory size
             err = clGetDeviceInfo(device[j], CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(cl_ulong), &mem_size, NULL);
             checkError(err, "Getting device global memory cache size");
-            printf("\t\tGlobal Memory Cache Size: %llu B\n", mem_size);
+            printf("\t\tGlobal Memory Cache Size: %lu B\n", mem_size);
             cl_uint mem_size2;
             // Get global memory size
             err = clGetDeviceInfo(device[j], CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cl_uint), &mem_size2, NULL);
@@ -115,7 +115,7 @@ void cl_info(void)
             // Get maximum buffer alloc. size
             err = clGetDeviceInfo(device[j], CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &mem_size, NULL);
             checkError(err, "Getting device max allocation size");
-            printf("\t\tMax Alloc Size: %llu MB\n", mem_size/(1024*1024));
+            printf("\t\tMax Alloc Size: %lu MB\n", mem_size/(1024*1024));
 
             // Get work-group size information
             size_t size;

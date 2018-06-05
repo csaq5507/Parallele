@@ -25,6 +25,7 @@ typedef struct _cl_mm_environment {
     cl_command_queue queue;
     cl_program program;
     cl_kernel kernel_d_a_c;
+    cl_kernel kernel_d_a_c_filled;
     cl_kernel kernel_default;
 } cl_mm_environment;
 
@@ -115,25 +116,42 @@ int main(int argc, char** argv) {
 
             // clear result
             memset(C,0,sizeof(value_t) * N * N);
-
-            // create buffer on device
-            cl_int err;
-            cl_mem devMatA = clCreateBuffer(env.context, CL_MEM_READ_ONLY , N * N * sizeof(value_t), NULL, &err);
-            CLU_ERRCHECK(err, "Failed to create buffer for matrix A");
-            cl_mem devMatB = clCreateBuffer(env.context, CL_MEM_READ_ONLY, N * N * sizeof(value_t), NULL, &err);
-            CLU_ERRCHECK(err, "Failed to create buffer for matrix B");
-            cl_mem devMatC = clCreateBuffer(env.context, CL_MEM_WRITE_ONLY , N * N * sizeof(value_t), NULL, &err);
-
-            // transfere data
-            err = clEnqueueWriteBuffer(env.queue, devMatA, CL_TRUE, 0, N * N * sizeof(value_t), A, 0, NULL, NULL);
-            CLU_ERRCHECK(err, "Failed to write matrix A to device");
-            err = clEnqueueWriteBuffer(env.queue, devMatB, CL_TRUE, 0,  N * N * sizeof(value_t), B, 0, NULL, NULL);
-            CLU_ERRCHECK(err, "Failed to write matrix B to device");
             cl_kernel * k;
             size_t S ;
 
-            k = &(env.kernel_d_a_c);
+            k = &(env.kernel_d_a_c_filled);
             S = roundUpToMultiple(N, BLOCK_SIZE);
+            restrict Matrix A_temp = createMatrix(S,S);
+            restrict Matrix B_temp = createMatrix(S,S);
+            restrict Matrix C_temp = createMatrix(S,S);
+            for(int i = 0; i<S; i++) {
+                for(int j = 0; j<S; j++) {
+                    if(i<N && j<N){
+                        A_temp[i * S + j] = A[i * N + j];
+                        B_temp[i * S + j] = B[i * N + j];
+                    } else {
+                        A_temp[i * S + j] = 0.0;
+                        B_temp[i * S + j] = 0.0;
+                    }
+                }
+            }
+
+            memset(C_temp,0,sizeof(value_t) * S * S);
+
+            // create buffer on device
+            cl_int err;
+            cl_mem devMatA = clCreateBuffer(env.context, CL_MEM_READ_ONLY, S * S * sizeof(value_t), NULL, &err);
+            CLU_ERRCHECK(err, "Failed to create buffer for matrix A");
+            cl_mem devMatB = clCreateBuffer(env.context, CL_MEM_READ_ONLY, S * S * sizeof(value_t), NULL, &err);
+            CLU_ERRCHECK(err, "Failed to create buffer for matrix B");
+            cl_mem devMatC = clCreateBuffer(env.context, CL_MEM_HOST_READ_ONLY, S * S * sizeof(value_t), NULL, &err);
+
+            // transfere data
+            err = clEnqueueWriteBuffer(env.queue, devMatA, CL_TRUE, 0, S * S * sizeof(value_t), A_temp, 0, NULL, NULL);
+            CLU_ERRCHECK(err, "Failed to write matrix A to device");
+            err = clEnqueueWriteBuffer(env.queue, devMatB, CL_TRUE, 0,  S * S * sizeof(value_t), B_temp, 0, NULL, NULL);
+            CLU_ERRCHECK(err, "Failed to write matrix B to device");
+
 
 
             const int LOC_SIZE = BLOCK_SIZE;
@@ -143,7 +161,7 @@ int main(int argc, char** argv) {
             clSetKernelArg(*k, 0, sizeof(cl_mem), (void *)&devMatA);
             clSetKernelArg(*k, 1, sizeof(cl_mem), (void *)&devMatB);
             clSetKernelArg(*k, 2, sizeof(cl_mem), (void *)&devMatC);
-            clSetKernelArg(*k, 3, sizeof(int),&N);
+            clSetKernelArg(*k, 3, sizeof(int),&S);
 
             // submit kernel
             cl_event event;
@@ -170,9 +188,15 @@ int main(int argc, char** argv) {
             CLU_ERRCHECK(clReleaseEvent(event), "Failed to release event");
 
             // copy results back to host
-            err = clEnqueueReadBuffer(env.queue, devMatC, CL_TRUE, 0, N * N * sizeof(value_t), C, 0, NULL, NULL);
+            err = clEnqueueReadBuffer(env.queue, devMatC, CL_TRUE, 0, S * S * sizeof(value_t), C_temp, 0, NULL, NULL);
             CLU_ERRCHECK(err, "Failed reading back result");
-
+            for(int i = 0; i<S; i++) {
+                for (int j = 0; j < S; j++) {
+                    if (i < N && j < N) {
+                        C[i * N + j] = C_temp[i * S + j];
+                    }
+                }
+            }
             // check result
             bool success = true;
             for(int i = 0; i<N; i++) {
@@ -265,6 +289,7 @@ cl_mm_environment createMMEnvironment() {
     cl_int err;
     res.program = cluBuildProgramFromFile(res.context, device_id, "mat_mul.cl", NULL);
     res.kernel_d_a_c = clCreateKernel(res.program, "matrix_multiplication_divide_and_conquer", &err);
+    res.kernel_d_a_c_filled = clCreateKernel(res.program, "matrix_multiplication_divide_and_conquer_already_filled", &err);
     res.kernel_default = clCreateKernel(res.program, "mat_mul", &err);
     CLU_ERRCHECK(err, "Failed to create mat_mul kernel from program");
 

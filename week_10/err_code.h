@@ -146,7 +146,6 @@ void check_error(cl_int err, const char *operation, char *filename, int line)
         fprintf(stderr, "Error during operation '%s', ", operation);
         fprintf(stderr, "in '%s' on line %d\n", filename, line);
         fprintf(stderr, "Error code was \"%s\" (%d)\n", err_code(err), err);
-        exit(EXIT_FAILURE);
     }
 }
 

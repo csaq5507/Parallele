@@ -73,3 +73,50 @@ __kernel void matrix_multiplication_divide_and_conquer(
     if(x < N && y < N)
         C[y * N + x] = result;
 }
+
+
+#define BLOCK_SIZE 32
+
+__kernel void matrix_multiplication_divide_and_conquer_already_filled(
+        __global float* A,
+        __global float* B,
+        __global float* C,
+        unsigned int N)
+{
+
+    __local float A_loc[BLOCK_SIZE*BLOCK_SIZE];
+    __local float B_loc[BLOCK_SIZE*BLOCK_SIZE];
+
+    // obtain position of this 'thread'
+    size_t x = get_global_id(0);
+    size_t y = get_global_id(1);
+
+    // obtain position of this 'thread' local
+    size_t x_loc = get_local_id(0);
+    size_t y_loc = get_local_id(1);
+
+    // obtain group index of this 'thread'
+    size_t x_group = get_group_id(0);
+    size_t y_group = get_group_id(1);
+
+    size_t loc_idx = y_loc * BLOCK_SIZE + x_loc;
+
+    float result = 0.0;
+
+    for (int i=0; i < N; i += BLOCK_SIZE) {
+
+        A_loc[loc_idx] = A[(N * BLOCK_SIZE * y_group) + i + (y_loc * N) + x_loc];
+
+        B_loc[loc_idx] = B[(BLOCK_SIZE * x_group) + (i * N) + (y_loc * N) + x_loc];
+
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+        for (int j = 0; j < BLOCK_SIZE; ++j) {
+            result += A_loc[y_loc*BLOCK_SIZE + j] * B_loc[j * BLOCK_SIZE + x_loc];
+        }
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+    }
+
+    C[y * N + x] = result;
+}
