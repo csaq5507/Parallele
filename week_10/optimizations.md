@@ -1,1 +1,4 @@
 - We've implemented the Divide and Conquer Algorithm found on https://en.wikipedia.org/wiki/Matrix_multiplication_algorithm#Divide_and_conquer_algorithm
+- filled the matrix on cpu with zeroes, illegal?
+- use cl_float instead of float
+- aligned local memory in kernel 10% speedup
