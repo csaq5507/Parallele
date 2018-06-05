@@ -271,7 +271,7 @@ int main(int argc, char** argv) {
 
 Matrix createMatrix(int N, int M) {
     // create data and index vector
-    return malloc(sizeof(value_t)*N*M);
+    return aligned_alloc(1024,sizeof(value_t)*N*M);
 }
 
 void releaseMatrix(Matrix m) {
