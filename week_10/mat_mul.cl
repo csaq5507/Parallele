@@ -1,7 +1,7 @@
 __kernel void mat_mul(
-    __global float* c,
     __global const float* a,
     __global const float* b,
+    __global float* c,
     int N
 ) {
     // obtain position of this 'thread'
@@ -24,14 +24,14 @@ __kernel void mat_mul(
 #define BLOCK_SIZE 32
 
 __kernel void matrix_multiplication_divide_and_conquer(
-        __global float* A,
-        __global float* B,
+        __global const float* A,
+        __global const float* B,
         __global float* C,
         unsigned int N)
 {
 
-    __local float A_loc[BLOCK_SIZE*BLOCK_SIZE];
-    __local float B_loc[BLOCK_SIZE*BLOCK_SIZE];
+    __local float A_loc[BLOCK_SIZE*BLOCK_SIZE]__attribute__ ((aligned(BLOCK_SIZE)));
+    __local float B_loc[BLOCK_SIZE*BLOCK_SIZE]__attribute__ ((aligned(BLOCK_SIZE)));
 
     // obtain position of this 'thread'
     size_t x = get_global_id(0);
@@ -47,6 +47,9 @@ __kernel void matrix_multiplication_divide_and_conquer(
 
     size_t loc_idx = y_loc * BLOCK_SIZE + x_loc;
 
+	size_t glob_idx_a = (N * BLOCK_SIZE * y_group) + (y_loc * N) + x_loc;
+	size_t glob_idx_b = (BLOCK_SIZE * x_group) + (y_loc * N) + x_loc;
+	
     float result = 0;
 
     for (int i=0; i < N; i += BLOCK_SIZE) {
@@ -54,15 +57,16 @@ __kernel void matrix_multiplication_divide_and_conquer(
         if((i + x_loc) >= N)
             A_loc[loc_idx] = 0;
         else
-            A_loc[loc_idx] = A[(N * BLOCK_SIZE * y_group) + i + (y_loc * N) + x_loc];
+            A_loc[loc_idx] = A[glob_idx_a+i];
 
         if((i + y_loc) >= N)
             B_loc[loc_idx] = 0;
         else
-            B_loc[loc_idx] = B[(BLOCK_SIZE * x_group) + (i * N) + (y_loc * N) + x_loc];
+            B_loc[loc_idx] = B[glob_idx_b + (i*N)];
 
         barrier(CLK_LOCAL_MEM_FENCE);
-
+        
+         #pragma unroll
         for (int j = 0; j < BLOCK_SIZE; ++j) {
             result += A_loc[y_loc*BLOCK_SIZE + j] * B_loc[j * BLOCK_SIZE + x_loc];
         }
@@ -74,8 +78,6 @@ __kernel void matrix_multiplication_divide_and_conquer(
         C[y * N + x] = result;
 }
 
-
-#define BLOCK_SIZE 32
 
 __kernel void matrix_multiplication_divide_and_conquer_already_filled(
         __global float* A,
