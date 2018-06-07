@@ -1,0 +1,141 @@
+Start benchmarking ...
+
+Setting up N=500 ..
+	CPU setup took 0.007s / 34.804 GFLOPS
+	Duration: 0.005s, GFLOPS: 45.557, Verification: OK
+	Duration: 0.006s, GFLOPS: 45.194, Verification: OK
+	Duration: 0.005s, GFLOPS: 45.488, Verification: OK
+				Performance result for N=500: 45.557
+
+Setting up N=734 ..
+	CPU setup took 0.015s / 52.477 GFLOPS
+	Duration: 0.016s, GFLOPS: 48.239, Verification: OK
+	Duration: 0.016s, GFLOPS: 48.224, Verification: OK
+	Duration: 0.016s, GFLOPS: 48.125, Verification: OK
+				Performance result for N=734: 48.239
+
+Setting up N=1024 ..
+	CPU setup took 0.046s / 46.954 GFLOPS
+	Duration: 0.042s, GFLOPS: 50.997, Verification: OK
+	Duration: 0.042s, GFLOPS: 50.871, Verification: OK
+	Duration: 0.042s, GFLOPS: 51.196, Verification: OK
+				Performance result for N=1024: 51.196
+
+Setting up N=1493 ..
+	CPU setup took 0.229s / 29.115 GFLOPS
+	Duration: 0.142s, GFLOPS: 46.784, Verification: OK
+	Duration: 0.142s, GFLOPS: 46.855, Verification: OK
+	Duration: 0.142s, GFLOPS: 46.909, Verification: OK
+				Performance result for N=1493: 46.909
+
+Setting up N=2345 ..
+	CPU setup took 0.967s / 26.673 GFLOPS
+	Duration: 0.554s, GFLOPS: 46.565, Verification: OK
+	Duration: 0.553s, GFLOPS: 46.642, Verification: OK
+	Duration: 0.554s, GFLOPS: 46.515, Verification: OK
+				Performance result for N=2345: 46.642
+
+Setting up N=4001 ..
+	CPU setup took 4.760s / 26.912 GFLOPS
+	Duration: 2.741s, GFLOPS: 46.732, Verification: OK
+	Duration: 2.742s, GFLOPS: 46.722, Verification: OK
+	Duration: 2.742s, GFLOPS: 46.717, Verification: OK
+				Performance result for N=4001: 46.732
+
+-------------------------------------------------
+Overall result: 47.512 GFLOPS
+-------------------------------------------------
+Start benchmarking ...
+
+Setting up N=500 ..
+	CPU setup took 0.007s / 34.561 GFLOPS
+	Duration: 0.006s, GFLOPS: 45.287, Verification: OK
+	Duration: 0.005s, GFLOPS: 45.600, Verification: OK
+	Duration: 0.006s, GFLOPS: 45.111, Verification: OK
+				Performance result for N=500: 45.600
+
+Setting up N=734 ..
+	CPU setup took 0.015s / 52.379 GFLOPS
+	Duration: 0.016s, GFLOPS: 48.185, Verification: OK
+	Duration: 0.016s, GFLOPS: 48.227, Verification: OK
+	Duration: 0.016s, GFLOPS: 48.236, Verification: OK
+				Performance result for N=734: 48.236
+
+Setting up N=1024 ..
+	CPU setup took 0.046s / 46.564 GFLOPS
+	Duration: 0.042s, GFLOPS: 51.344, Verification: OK
+	Duration: 0.042s, GFLOPS: 51.018, Verification: OK
+	Duration: 0.042s, GFLOPS: 51.182, Verification: OK
+				Performance result for N=1024: 51.344
+
+Setting up N=1493 ..
+	CPU setup took 0.227s / 29.271 GFLOPS
+	Duration: 0.142s, GFLOPS: 46.731, Verification: OK
+	Duration: 0.142s, GFLOPS: 46.954, Verification: OK
+	Duration: 0.142s, GFLOPS: 46.837, Verification: OK
+				Performance result for N=1493: 46.954
+
+Setting up N=2345 ..
+	CPU setup took 1.120s / 23.034 GFLOPS
+	Duration: 0.557s, GFLOPS: 46.261, Verification: OK
+	Duration: 0.555s, GFLOPS: 46.491, Verification: OK
+	Duration: 0.553s, GFLOPS: 46.609, Verification: OK
+				Performance result for N=2345: 46.609
+
+Setting up N=4001 ..
+	CPU setup took 5.468s / 23.428 GFLOPS
+	Duration: 2.741s, GFLOPS: 46.726, Verification: OK
+	Duration: 2.742s, GFLOPS: 46.721, Verification: OK
+	Duration: 2.740s, GFLOPS: 46.753, Verification: OK
+				Performance result for N=4001: 46.753
+
+-------------------------------------------------
+Overall result: 47.548 GFLOPS
+-------------------------------------------------
+Start benchmarking ...
+
+Setting up N=500 ..
+	CPU setup took 0.007s / 35.152 GFLOPS
+	Duration: 0.006s, GFLOPS: 45.262, Verification: OK
+	Duration: 0.005s, GFLOPS: 45.583, Verification: OK
+	Duration: 0.006s, GFLOPS: 45.278, Verification: OK
+				Performance result for N=500: 45.583
+
+Setting up N=734 ..
+	CPU setup took 0.015s / 51.675 GFLOPS
+	Duration: 0.016s, GFLOPS: 48.260, Verification: OK
+	Duration: 0.016s, GFLOPS: 48.360, Verification: OK
+	Duration: 0.016s, GFLOPS: 48.194, Verification: OK
+				Performance result for N=734: 48.360
+
+Setting up N=1024 ..
+	CPU setup took 0.046s / 46.361 GFLOPS
+	Duration: 0.042s, GFLOPS: 50.950, Verification: OK
+	Duration: 0.042s, GFLOPS: 51.008, Verification: OK
+	Duration: 0.043s, GFLOPS: 50.461, Verification: OK
+				Performance result for N=1024: 51.008
+
+Setting up N=1493 ..
+	CPU setup took 0.225s / 29.550 GFLOPS
+	Duration: 0.142s, GFLOPS: 46.808, Verification: OK
+	Duration: 0.142s, GFLOPS: 46.854, Verification: OK
+	Duration: 0.142s, GFLOPS: 46.805, Verification: OK
+				Performance result for N=1493: 46.854
+
+Setting up N=2345 ..
+	CPU setup took 0.965s / 26.726 GFLOPS
+	Duration: 0.554s, GFLOPS: 46.570, Verification: OK
+	Duration: 0.554s, GFLOPS: 46.528, Verification: OK
+	Duration: 0.553s, GFLOPS: 46.620, Verification: OK
+				Performance result for N=2345: 46.620
+
+Setting up N=4001 ..
+	CPU setup took 5.252s / 24.389 GFLOPS
+	Duration: 2.738s, GFLOPS: 46.782, Verification: OK
+	Duration: 2.739s, GFLOPS: 46.766, Verification: OK
+	Duration: 2.742s, GFLOPS: 46.724, Verification: OK
+				Performance result for N=4001: 46.782
+
+-------------------------------------------------
+Overall result: 47.503 GFLOPS
+-------------------------------------------------
