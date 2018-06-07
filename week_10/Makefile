@@ -19,11 +19,13 @@ info: $(COMMON_DEPENDENCIES) cl_info.c cl_utils.h err_code.h
 .PHONEY: clean
 clean:
 	@rm mat_mul_bench
+	@rm mat_mul_bench_fill_cpu
 	@rm info
 
 run: all
 	@echo "Running benchmark .."
 	@./mat_mul_bench
+	@./mat_mul_bench_fill_cpu
 	@./info
 
 

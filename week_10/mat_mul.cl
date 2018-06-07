@@ -36,11 +36,7 @@ __kernel void matrix_multiplication_divide_and_conquer(
     __local float A_loc1[BLOCK_SIZE*BLOCK_SIZE]__attribute__ ((aligned(BLOCK_SIZE)));
     __local float B_loc1[BLOCK_SIZE*BLOCK_SIZE]__attribute__ ((aligned(BLOCK_SIZE)));
 
-    __local float A_loc2[BLOCK_SIZE*BLOCK_SIZE]__attribute__ ((aligned(BLOCK_SIZE)));
-    __local float B_loc2[BLOCK_SIZE*BLOCK_SIZE]__attribute__ ((aligned(BLOCK_SIZE)));
 
-    __local float A_loc3[BLOCK_SIZE*BLOCK_SIZE]__attribute__ ((aligned(BLOCK_SIZE)));
-    __local float B_loc3[BLOCK_SIZE*BLOCK_SIZE]__attribute__ ((aligned(BLOCK_SIZE)));
 
     // obtain position of this 'thread'
     size_t x = get_global_id(0);
@@ -60,9 +56,54 @@ __kernel void matrix_multiplication_divide_and_conquer(
 	size_t glob_idx_b = (BLOCK_SIZE * x_group) + (y_loc * N) + x_loc;
 	
     float result = 0;
+    int i;
+    for (i=0; i < N - BLOCK_SIZE; i += (BLOCK_SIZE*2)) {
 
-    for (int i=0; i < N; i += (BLOCK_SIZE*2)) {
+        if((i + x_loc) >= N)
+        {
+            A_loc[loc_idx] = 0;
+            A_loc1[loc_idx] = 0;
+        }else
+        {
+            A_loc[loc_idx] = A[glob_idx_a + i];
+            if((i + x_loc+BLOCK_SIZE) >= N)
+                A_loc1[loc_idx] = 0;
+            else
+                A_loc1[loc_idx] = A[glob_idx_a + i + BLOCK_SIZE];
+        }
 
+        if((i + y_loc) >= N)
+        {
+            B_loc[loc_idx] = 0;
+            B_loc1[loc_idx] = 0;
+        }
+        else
+        {
+            B_loc[loc_idx] = B[glob_idx_b + (i*N)];
+            if((i + y_loc + BLOCK_SIZE) >= N)
+                B_loc1[loc_idx] = 0;
+            else
+                B_loc1[loc_idx] = B[glob_idx_b + ((i+BLOCK_SIZE)*N)];
+
+        }
+        barrier(CLK_LOCAL_MEM_FENCE);
+        
+        int a_idx = y_loc*BLOCK_SIZE;
+        #pragma unroll
+        for (int j = 0; j < BLOCK_SIZE; ++j) {
+            result += A_loc[a_idx + j] * B_loc[j * BLOCK_SIZE + x_loc];
+        }
+
+        #pragma unroll
+        for (int j = 0; j < BLOCK_SIZE; ++j) {
+            result += A_loc1[a_idx + j] * B_loc1[j * BLOCK_SIZE + x_loc];
+        }
+
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+    }
+
+    if (i<N) {
         if((i + x_loc) >= N)
             A_loc[loc_idx] = 0;
         else
@@ -74,16 +115,14 @@ __kernel void matrix_multiplication_divide_and_conquer(
             B_loc[loc_idx] = B[glob_idx_b + (i*N)];
 
         barrier(CLK_LOCAL_MEM_FENCE);
-        
+
         int a_idx = y_loc*BLOCK_SIZE;
+
         #pragma unroll
         for (int j = 0; j < BLOCK_SIZE; ++j) {
             result += A_loc[a_idx + j] * B_loc[j * BLOCK_SIZE + x_loc];
         }
-        barrier(CLK_LOCAL_MEM_FENCE);
-
     }
-
     if(x < N && y < N)
         C[y * N + x] = result;
 }

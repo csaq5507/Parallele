@@ -2,3 +2,4 @@
 - filled the matrix on cpu with zeroes, illegal?
 - use cl_float instead of float
 - aligned local memory in kernel 10% speedup
+- use more of local memory to minimize barriers
